@@ -1,0 +1,1221 @@
+<!-- 「🍊意配」AI恋爱军师 - 助力你的浪漫破冰 -->
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orange Match | 🍊意配 - 沉浸式匹配聊天</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary": "#a23f00",
+              "on-surface": "#1c1c18",
+              "tertiary": "#785a00",
+              "surface-dim": "#dddad4",
+              "primary-fixed": "#ffdcc5",
+              "background": "#fdf9f3",
+              "surface-bright": "#fdf9f3",
+              "on-secondary-container": "#5c2000",
+              "primary": "#944a00",
+              "on-primary": "#ffffff",
+              "on-error": "#ffffff",
+              "surface-variant": "#e6e2dc",
+              "on-surface-variant": "#554337",
+              "error-container": "#ffdad6",
+              "surface": "#fdf9f3",
+              "inverse-primary": "#ffb783",
+              "error": "#ba1a1a",
+              "on-tertiary": "#ffffff",
+              "outline": "#887365",
+              "on-secondary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#fc7127",
+              "on-primary-container": "#602e00",
+              "outline-variant": "#dbc2b2",
+              "on-background": "#1c1c18",
+              "inverse-surface": "#31302d",
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "2xl": "1.25rem", "3xl": "2rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        font-family: 'Manrope', sans-serif;
+        background-color: #fdf9f3;
+        background-image: radial-gradient(circle at 50% 50%, rgba(242, 140, 56, 0.03) 0%, transparent 50%);
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      .warm-gradient {
+        background: linear-gradient(135deg, #f28c38 0%, #ffb783 100%);
+      }
+      .premium-gradient {
+        background: linear-gradient(145deg, #1c1c18 0%, #31302d 100%);
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #dbc2b2;
+        border-radius: 10px;
+      }
+      .mesh-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: 
+          radial-gradient(at 0% 0%, rgba(242, 140, 56, 0.08) 0px, transparent 40%),
+          radial-gradient(at 100% 100%, rgba(242, 140, 56, 0.05) 0px, transparent 40%);
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex overflow-hidden">
+<div class="mesh-bg"></div>
+<!-- AI Strategist & Icebreaker Sidebar (Left) -->
+<aside class="flex flex-col h-screen w-80 border-r border-outline-variant/10 bg-white/40 backdrop-blur-3xl z-20 overflow-y-auto custom-scrollbar">
+<div class="px-6 py-8">
+<div class="flex items-center gap-2.5 mb-8">
+<div class="w-10 h-10 rounded-2xl warm-gradient flex items-center justify-center text-white shadow-md">
+<span class="material-symbols-outlined text-[24px] font-light" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div>
+<h2 class="text-lg font-bold text-on-surface tracking-tight leading-none">AI 恋爱军师</h2>
+<p class="text-[10px] text-on-surface-variant/60 font-medium mt-1 uppercase tracking-wider">Love Strategist</p>
+</div>
+</div>
+<div class="space-y-8">
+<!-- Premium AI Strategist Section -->
+<section>
+<div class="premium-gradient p-5 rounded-3xl shadow-xl relative overflow-hidden group border border-white/10">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary-fixed text-lg" data-icon="temp_preferences_custom">temp_preferences_custom</span>
+<span class="text-[10px] font-black text-primary-fixed uppercase tracking-[0.2em]">深度智囊</span>
+</div>
+<h4 class="text-sm font-bold text-white mb-2">解锁私人恋爱智囊</h4>
+<p class="text-[11px] text-white/60 leading-relaxed mb-4">获取针对当前对话的实时回复建议与专属约会方案，像专家一样交流。</p>
+<button class="w-full py-2.5 bg-primary-fixed text-on-primary-fixed text-[11px] font-black rounded-xl hover:bg-white transition-all shadow-sm flex items-center justify-center gap-2">
+<span>捐赠支持项目以解锁</span>
+<span class="material-symbols-outlined text-sm" data-icon="lock_open">lock_open</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Topic Recommendations (Default) -->
+<section>
+<h3 class="text-[11px] font-extrabold text-on-surface-variant/40 tracking-widest uppercase mb-4 px-1">基础破冰话题卡</h3>
+<div class="space-y-3">
+<div class="glass-card p-4 rounded-[1.5rem] cursor-pointer hover:border-primary-fixed-dim/40 hover:shadow-lg hover:shadow-primary/5 transition-all group">
+<div class="flex items-center gap-2 text-primary mb-2">
+<span class="material-symbols-outlined text-sm" data-icon="library_books">library_books</span>
+<span class="text-[9px] font-bold uppercase tracking-wider">共同点：哈工程图书馆</span>
+</div>
+<p class="text-[12px] text-on-surface leading-snug font-medium">聊聊图书馆里那个只有你发现的安静角落？</p>
+</div>
+<div class="glass-card p-4 rounded-[1.5rem] cursor-pointer hover:border-primary-fixed-dim/40 hover:shadow-lg hover:shadow-primary/5 transition-all group">
+<div class="flex items-center gap-2 text-primary mb-2">
+<span class="material-symbols-outlined text-sm" data-icon="coffee">coffee</span>
+<span class="text-[9px] font-bold uppercase tracking-wider">共同点：精品咖啡</span>
+</div>
+<p class="text-[12px] text-on-surface leading-snug font-medium">比起燕麦拿铁，你更偏爱哪种产区的豆子？</p>
+</div>
+<div class="glass-card p-4 rounded-[1.5rem] cursor-pointer hover:border-primary-fixed-dim/40 hover:shadow-lg hover:shadow-primary/5 transition-all group">
+<div class="flex items-center gap-2 text-primary mb-2">
+<span class="material-symbols-outlined text-sm" data-icon="palette">palette</span>
+<span class="text-[9px] font-bold uppercase tracking-wider">共同点：建筑审美</span>
+</div>
+<p class="text-[12px] text-on-surface leading-snug font-medium">如果你可以重新设计校园里的一个角落...</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="mt-auto p-6 border-t border-outline-variant/5">
+<div class="flex items-center gap-3 text-on-surface-variant/40">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span class="text-[10px] font-medium">Orange AI 智能加密保障</span>
+</div>
+</div>
+</aside>
+<!-- Main Chat Area -->
+<main class="flex-1 flex flex-col relative overflow-hidden">
+<!-- Header -->
+<header class="flex justify-between items-center px-8 w-full h-20 sticky top-0 z-50 bg-white/30 backdrop-blur-2xl border-b border-white/20">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3">
+<span class="text-xl font-black text-on-surface tracking-tight">Orange 🍊</span>
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-fixed/50 text-[10px] font-bold text-primary border border-primary-fixed-dim/20">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+                    98% 灵魂契合
+                </div>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<nav class="flex items-center gap-6">
+<button class="text-[12px] font-bold text-on-surface-variant/60 hover:text-primary transition-colors">举报</button>
+<button class="text-[12px] font-bold text-error hover:opacity-80 transition-opacity">结束匹配</button>
+</nav>
+<div class="h-6 w-px bg-outline-variant/20"></div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/60 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+</header>
+<!-- Chat Messages -->
+<div class="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar pb-36">
+<div class="flex justify-center">
+<div class="bg-white/50 backdrop-blur-md border border-white/40 px-6 py-2 rounded-full text-[10px] font-black text-on-surface-variant/40 tracking-[0.2em] shadow-sm uppercase">
+                    缘分始于 2 天前
+                </div>
+</div>
+<!-- Left Message -->
+<div class="flex items-end gap-5 max-w-[70%]">
+<div class="w-12 h-12 rounded-[1.25rem] bg-primary-fixed flex-shrink-0 flex items-center justify-center text-2xl shadow-sm border border-white">🍊</div>
+<div class="space-y-2">
+<div class="glass-card px-6 py-4 rounded-3xl rounded-bl-none shadow-sm text-[14px] text-on-surface leading-relaxed">
+                        嘿！我发现我们都常去图书馆二楼。你通常是坐在靠窗的那个位置吗？
+                    </div>
+<span class="text-[10px] text-on-surface-variant/30 ml-1 font-medium">10:24 AM</span>
+</div>
+</div>
+<!-- Right Message -->
+<div class="flex flex-row-reverse items-end gap-5 max-w-[70%] ml-auto">
+<div class="w-12 h-12 rounded-[1.25rem] warm-gradient flex-shrink-0 flex items-center justify-center text-white text-xl shadow-lg border border-white/20">👤</div>
+<div class="space-y-2 text-right">
+<div class="warm-gradient px-6 py-4 rounded-3xl rounded-br-none shadow-xl shadow-primary/10 text-[14px] text-white leading-relaxed text-left">
+                        被发现了！😅 窗边的位置视野最好，学习累了看窗外特别解压。你现在在那儿吗？
+                    </div>
+<div class="flex items-center justify-end gap-1.5">
+<span class="text-[10px] text-on-surface-variant/30 font-medium">10:28 AM</span>
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="done_all">done_all</span>
+</div>
+</div>
+</div>
+<!-- Left Message -->
+<div class="flex items-end gap-5 max-w-[70%]">
+<div class="w-12 h-12 rounded-[1.25rem] bg-primary-fixed flex-shrink-0 flex items-center justify-center text-2xl shadow-sm border border-white">🍊</div>
+<div class="space-y-2">
+<div class="glass-card px-6 py-4 rounded-3xl rounded-bl-none shadow-sm text-[14px] text-on-surface leading-relaxed">
+                        今天不在呢，不幸被困在一个 3 小时的研讨会里。简直是酷刑。
+                    </div>
+<span class="text-[10px] text-on-surface-variant/30 ml-1 font-medium">10:30 AM</span>
+</div>
+</div>
+</div>
+<!-- Floating Input -->
+<div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-[calc(100%-6rem)] max-w-2xl z-40">
+<div class="glass-card rounded-[2.5rem] p-2.5 shadow-2xl flex items-center gap-2 border-white/70">
+<div class="flex items-center gap-1 pl-2">
+<button class="w-10 h-10 rounded-full hover:bg-white/80 transition-colors text-on-surface-variant/60 flex items-center justify-center">
+<span class="material-symbols-outlined text-xl" data-icon="add_circle">add_circle</span>
+</button>
+<button class="w-10 h-10 rounded-full hover:bg-white/80 transition-colors text-on-surface-variant/60 flex items-center justify-center">
+<span class="material-symbols-outlined text-xl" data-icon="sentiment_satisfied">sentiment_satisfied</span>
+</button>
+</div>
+<input class="flex-1 bg-transparent border-none rounded-2xl px-4 py-3.5 text-sm focus:ring-0 placeholder:text-on-surface-variant/30 font-medium" placeholder="回复 Orange..." type="text"/>
+<button class="w-14 h-11 rounded-full warm-gradient text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform mr-1">
+<span class="material-symbols-outlined text-[22px]" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Match Profile (Right Sidebar) -->
+<aside class="hidden xl:flex flex-col w-80 bg-white/30 backdrop-blur-3xl p-8 gap-8 h-screen border-l border-outline-variant/5 overflow-y-auto custom-scrollbar">
+<div class="text-center space-y-5">
+<div class="relative inline-block">
+<div class="w-28 h-28 rounded-3xl bg-primary-fixed flex items-center justify-center text-6xl shadow-2xl border-4 border-white">🍊</div>
+<div class="absolute bottom-1 right-1 bg-green-500 w-6 h-6 rounded-full border-4 border-[#fdf9f3]"></div>
+</div>
+<div>
+<h2 class="text-2xl font-black text-on-surface tracking-tight">Orange</h2>
+<p class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] mt-1">代号：橙色频率</p>
+</div>
+</div>
+<!-- Personality Metrics -->
+<div class="space-y-6">
+<div class="bg-white/50 rounded-[2rem] p-6 border border-white/60">
+<h3 class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] mb-6">性格指标对比</h3>
+<div class="space-y-6">
+<div class="space-y-2.5">
+<div class="flex justify-between text-[10px] font-bold uppercase text-on-surface-variant/60 tracking-wider">
+<span>外向性</span>
+<span class="text-primary">高度重合</span>
+</div>
+<div class="h-1.5 bg-surface-container rounded-full overflow-hidden flex">
+<div class="h-full warm-gradient w-[85%] rounded-full opacity-20"></div>
+<div class="h-full bg-primary w-[78%] rounded-full -ml-[78%]"></div>
+</div>
+</div>
+<div class="space-y-2.5">
+<div class="flex justify-between text-[10px] font-bold uppercase text-on-surface-variant/60 tracking-wider">
+<span>开放性</span>
+<span class="text-primary">共振 92%</span>
+</div>
+<div class="h-1.5 bg-surface-container rounded-full overflow-hidden flex">
+<div class="h-full warm-gradient w-[92%] rounded-full opacity-20"></div>
+<div class="h-full bg-primary w-[90%] rounded-full -ml-[90%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Soul Resonance -->
+<div class="bg-white/50 rounded-[2rem] p-6 border border-white/60">
+<h3 class="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] mb-4">灵魂共鸣点</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 bg-primary-fixed/40 text-primary text-[10px] font-bold rounded-xl border border-primary-fixed-dim/20">独立音乐爱好者</span>
+<span class="px-3 py-1.5 bg-primary-fixed/40 text-primary text-[10px] font-bold rounded-xl border border-primary-fixed-dim/20">建筑美学</span>
+<span class="px-3 py-1.5 bg-primary-fixed/40 text-primary text-[10px] font-bold rounded-xl border border-primary-fixed-dim/20">深夜哲学</span>
+</div>
+</div>
+</div>
+<div class="mt-auto">
+<button class="w-full py-4 rounded-2xl bg-on-surface text-white text-[11px] font-black hover:bg-on-surface-variant transition-all flex items-center justify-center gap-2 uppercase tracking-[0.2em] shadow-lg">
+<span class="material-symbols-outlined text-[16px]" data-icon="analytics">analytics</span>
+                查看详细报告
+            </button>
+</div>
+</aside>
+</body></html>
+
+<!-- 「🍊意配」匹配报告 - 见证数据化的浪漫相遇 -->
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>🍊意配 - 匹配结果报告</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error": "#ba1a1a",
+              "surface": "#fdf9f3",
+              "inverse-primary": "#ffb783",
+              "surface-dim": "#dddad4",
+              "on-tertiary-fixed-variant": "#5a4300",
+              "outline": "#887365",
+              "on-secondary-fixed-variant": "#7c2e00",
+              "outline-variant": "#dbc2b2",
+              "secondary-container": "#fc7127",
+              "primary-fixed-dim": "#ffb783",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#602e00",
+              "error-container": "#ffdad6",
+              "secondary-fixed-dim": "#ffb595",
+              "on-primary": "#ffffff",
+              "on-surface": "#1c1c18",
+              "on-tertiary-fixed": "#251a00",
+              "tertiary": "#785a00",
+              "background": "#fdf9f3",
+              "on-secondary-container": "#5c2000",
+              "on-error-container": "#93000a",
+              "tertiary-fixed-dim": "#f8be00",
+              "primary-container": "#f68a2f",
+              "on-surface-variant": "#554337",
+              "on-primary-fixed-variant": "#713700",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f7f3ed",
+              "surface-container-high": "#ebe8e2",
+              "surface-container": "#f1ede7",
+              "primary": "#944a00",
+              "inverse-surface": "#31302d",
+              "surface-tint": "#944a00",
+              "surface-variant": "#e6e2dc",
+              "tertiary-container": "#d09e00",
+              "inverse-on-surface": "#f4f0ea",
+              "primary-fixed": "#ffdcc5",
+              "secondary": "#a23f00",
+              "secondary-fixed": "#ffdbcd",
+              "surface-container-highest": "#e6e2dc",
+              "tertiary-fixed": "#ffdf9a",
+              "on-error": "#ffffff",
+              "on-tertiary-container": "#4c3800",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#351000",
+              "on-primary-fixed": "#301400",
+              "surface-bright": "#fdf9f3",
+              "on-background": "#1c1c18"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .radar-grid {
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+        .bento-asymmetric {
+            border-radius: 1.5rem 0.25rem 1.5rem 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen pb-32">
+<!-- Top Navigation Anchor -->
+<nav class="sticky top-4 mx-auto w-[95%] max-w-7xl rounded-2xl bg-white/60 dark:bg-stone-900/60 backdrop-blur-3xl outline outline-1 outline-orange-200/15 dark:outline-stone-700/20 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex justify-between items-center px-8 py-4 z-50">
+<div class="text-2xl font-black text-orange-700 dark:text-orange-500 tracking-tighter">🍊意配</div>
+<div class="hidden md:flex gap-8 items-center font-manrope font-medium text-sm tracking-tight">
+<a class="text-stone-600 dark:text-stone-400 hover:text-orange-600 transition-colors" href="#">首页</a>
+<a class="text-stone-600 dark:text-stone-400 hover:text-orange-600 transition-colors" href="#">问卷</a>
+<a class="text-orange-700 dark:text-orange-400 font-bold border-b-2 border-orange-500 pb-1" href="#">我的匹配</a>
+</div>
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-stone-600 hover:bg-orange-50/50 p-2 rounded-lg transition-all cursor-pointer">school</span>
+<span class="material-symbols-outlined text-stone-600 hover:bg-orange-50/50 p-2 rounded-lg transition-all cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-stone-600 hover:bg-orange-50/50 p-2 rounded-lg transition-all cursor-pointer">account_circle</span>
+</div>
+</nav>
+<main class="max-w-4xl mx-auto px-6 mt-12 space-y-12">
+<!-- Hero Section: The Ritual Reveal -->
+<section class="relative text-center py-16 px-8 rounded-[2rem] overflow-hidden bg-surface-container-low">
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTOkvqqE3xIXk9bw56scUtH1xYzeX46TbO3aT9d514X3WjxICXvXxTHECzGlL5BnRnJqnq5Xbgp8cI_K-uQdHl84MmOFDFPoVsbsibK5uQWxgsKDJedvhGWCEsbDksCtD-M0s9jli7fmOyotJGIzqhd7acoHIuJe50S--8nEf7aFtIRz4zLHrrpoumiGgWaNnsuh3xOx8bbGGc4d2fDLj2ZlU82nHd9v4w3erSWGuDvN1Y1ux9fRsmqI8bLhNPceds9PII5GKOiDqT');"></div>
+<div class="relative z-10 space-y-4">
+<span class="label-md text-primary font-semibold tracking-widest uppercase">Matching Report</span>
+<h1 class="text-7xl md:text-8xl font-black tracking-tighter text-on-surface">
+                    契合度 <span class="bg-gradient-to-tr from-primary to-primary-container bg-clip-text text-transparent">98%</span>
+</h1>
+<!-- Normal Distribution Visualization -->
+<div class="w-full max-w-md mx-auto pt-8">
+<div class="relative h-24 w-full">
+<svg class="w-full h-full text-surface-container-highest stroke-outline-variant fill-none" viewbox="0 0 400 100">
+<path d="M0,100 Q100,100 200,10 T300,100 T400,100" stroke-width="2"></path>
+<circle class="fill-primary shadow-lg" cx="215" cy="22" r="6"></circle>
+<text class="text-[10px] font-bold fill-primary" x="230" y="25">YOU</text>
+</svg>
+<div class="mt-2 text-label-md text-on-surface-variant italic">
+                            恭喜！你们的契合度击败了全校 99.4% 的校友组合
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Soul Radar & Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Radar Card -->
+<div class="md:col-span-7 glass-card bento-asymmetric p-8 shadow-sm flex flex-col justify-between">
+<div>
+<h3 class="text-2xl font-bold tracking-tight mb-2">灵魂雷达图</h3>
+<p class="text-on-surface-variant text-sm mb-8">基于大五人格与生活轨迹的深度重合度分析</p>
+</div>
+<div class="relative aspect-square w-full max-w-[300px] mx-auto flex items-center justify-center">
+<!-- Radar Mesh Background -->
+<div class="absolute inset-0 radar-grid bg-surface-container-high opacity-30"></div>
+<div class="absolute inset-4 radar-grid bg-surface-container-high opacity-50"></div>
+<div class="absolute inset-8 radar-grid bg-surface-container-high opacity-70"></div>
+<!-- Radar Polygon Fill -->
+<svg class="absolute inset-0 w-full h-full overflow-visible" viewbox="0 0 100 100">
+<polygon class="fill-primary/20 stroke-primary stroke-[1.5]" points="50,10 85,35 75,85 25,85 15,35"></polygon>
+<!-- Labels -->
+<text class="text-[6px] font-bold fill-on-surface" text-anchor="middle" x="50" y="5">开放性</text>
+<text class="text-[6px] font-bold fill-on-surface" text-anchor="start" x="95" y="35">责任感</text>
+<text class="text-[6px] font-bold fill-on-surface" text-anchor="middle" x="80" y="92">宜人性</text>
+<text class="text-[6px] font-bold fill-on-surface" text-anchor="middle" x="20" y="92">神经质</text>
+<text class="text-[6px] font-bold fill-on-surface" text-anchor="end" x="5" y="35">外向性</text>
+</svg>
+</div>
+</div>
+<!-- Identity Preview Card -->
+<div class="md:col-span-5 flex flex-col gap-6">
+<div class="flex-1 bg-surface-container-highest rounded-3xl p-6 relative overflow-hidden group">
+<img class="absolute inset-0 w-full h-full object-cover grayscale brightness-90 group-hover:grayscale-0 transition-all duration-700" data-alt="close-up portrait of a student in a sunlit library, warm soft lighting, cinematic feel, shallow depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8e2vc4k1PCmgssLRIRsKYndhMERti01UyWUgoXKn9q2UKJ7yRW2JFBKG7bbe0kJw2oJ2DSskIYspz3m_VLREo_JBjUC0EfNhESyaHj3otlV7q33cjqu3HnrwwHCZt43xayOrxlO37A8U7aXqKGpDkGI6gZp5LAY_DIACa6amHp4XPJmbFBiCWaDn47mZRVbK6puhEqvm7-H92_wT63BLPa8ZEjXozrjKHykL54jGlmTJKYuUv79a7hIsqz5ZGTKT8ujY0wB4UQLCJ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="relative h-full flex flex-col justify-end text-white">
+<span class="text-xs font-bold tracking-widest opacity-80 mb-1">DREAM MATCH</span>
+<h4 class="text-2xl font-bold">哈工程「匿名」校友</h4>
+<p class="text-sm opacity-90">TA 也填写了“深海领航”志愿</p>
+</div>
+</div>
+<div class="bg-secondary-fixed text-on-secondary-fixed p-6 rounded-3xl shadow-sm">
+<div class="flex items-center gap-3 mb-3">
+<span class="material-symbols-outlined">schedule</span>
+<span class="text-sm font-bold">匹配时效</span>
+</div>
+<div class="text-4xl font-black tracking-tighter">71:59:42</div>
+<p class="text-xs mt-2 opacity-80">缘分转瞬即逝，请在 3 天内开启首聊</p>
+</div>
+</div>
+</div>
+<!-- Resonance Points: The Commonality Cards -->
+<section class="space-y-6">
+<h3 class="text-3xl font-bold tracking-tight px-2">共鸣时刻</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-8 rounded-[2rem] bg-surface-container-low space-y-4 hover:shadow-xl transition-shadow">
+<div class="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">night_shelter</span>
+</div>
+<h5 class="text-lg font-bold">深夜思想家</h5>
+<p class="text-on-surface-variant text-sm leading-relaxed">你们都勾选了“凌晨 2 点是灵感巅峰”，比起喧嚣的社交，更喜欢独处的静谧。</p>
+</div>
+<div class="p-8 rounded-[2rem] bg-surface-container-low space-y-4 hover:shadow-xl transition-shadow">
+<div class="w-12 h-12 rounded-2xl bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">menu_book</span>
+</div>
+<h5 class="text-lg font-bold">纸质书信徒</h5>
+<p class="text-on-surface-variant text-sm leading-relaxed">都喜欢在学校 11 号楼的窗边阅读，且坚持认为纸张的触感无可替代。</p>
+</div>
+<div class="p-8 rounded-[2rem] bg-surface-container-low space-y-4 hover:shadow-xl transition-shadow">
+<div class="w-12 h-12 rounded-2xl bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">restaurant</span>
+</div>
+<h5 class="text-lg font-bold">麻辣拌狂热</h5>
+<p class="text-on-surface-variant text-sm leading-relaxed">在饮食倾向中，你们不约而同地把“加醋的麻辣拌”排到了第一位。</p>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="flex flex-col items-center py-12 gap-4">
+<button class="w-full max-w-md py-5 bg-gradient-to-tr from-primary to-primary-container text-white text-lg font-bold rounded-full shadow-[0_8px_32px_rgba(148,74,0,0.3)] hover:scale-[1.02] active:scale-95 transition-all">
+                开启 72 小时限时聊天
+            </button>
+<button class="w-full max-w-md py-5 bg-surface-container-high text-primary text-lg font-bold rounded-full hover:bg-surface-variant transition-colors">
+                看看对方的问卷共性
+            </button>
+</section>
+<!-- Fallback/Next State -->
+<section class="mt-16 py-8 border-t border-outline-variant/20">
+<div class="glass-card rounded-2xl p-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface-container-highest rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">hourglass_empty</span>
+</div>
+<div>
+<p class="text-sm font-bold">想要更多可能？</p>
+<p class="text-xs text-on-surface-variant">宁缺毋滥，下周日 20:00 准时开奖</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Anchor (Mobile) -->
+<div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full bg-white/60 dark:bg-stone-900/60 backdrop-blur-2xl tonal-shift bg-stone-100/20 dark:bg-stone-800/20 shadow-[0_8px_32px_rgba(28,28,24,0.08)] flex justify-around items-center py-3 px-6 z-50">
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 w-12 h-12 hover:scale-110 transition-transform active:scale-90 duration-150">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[11px] font-semibold font-manrope">发现</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-gradient-to-tr from-orange-700 to-orange-400 text-white rounded-full w-12 h-12 shadow-lg shadow-orange-500/30 hover:scale-110 transition-transform active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="hidden">匹配</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 w-12 h-12 hover:scale-110 transition-transform active:scale-90 duration-150">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[11px] font-semibold font-manrope">我的</span>
+</div>
+</div>
+</body></html>
+
+<!-- 「🍊意配」身份认证 - 纯粹校园社交第一步 -->
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>🍊意配 - 校园身份认证</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Manrope & Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Design System Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error": "#ba1a1a",
+              "surface": "#fdf9f3",
+              "inverse-primary": "#ffb783",
+              "surface-dim": "#dddad4",
+              "on-tertiary-fixed-variant": "#5a4300",
+              "outline": "#887365",
+              "on-secondary-fixed-variant": "#7c2e00",
+              "outline-variant": "#dbc2b2",
+              "secondary-container": "#fc7127",
+              "primary-fixed-dim": "#ffb783",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#602e00",
+              "error-container": "#ffdad6",
+              "secondary-fixed-dim": "#ffb595",
+              "on-primary": "#ffffff",
+              "on-surface": "#1c1c18",
+              "on-tertiary-fixed": "#251a00",
+              "tertiary": "#785a00",
+              "background": "#fdf9f3",
+              "on-secondary-container": "#5c2000",
+              "on-error-container": "#93000a",
+              "tertiary-fixed-dim": "#f8be00",
+              "primary-container": "#f68a2f",
+              "on-surface-variant": "#554337",
+              "on-primary-fixed-variant": "#713700",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f7f3ed",
+              "surface-container-high": "#ebe8e2",
+              "surface-container": "#f1ede7",
+              "primary": "#944a00",
+              "inverse-surface": "#31302d",
+              "surface-tint": "#944a00",
+              "surface-variant": "#e6e2dc",
+              "tertiary-container": "#d09e00",
+              "inverse-on-surface": "#f4f0ea",
+              "primary-fixed": "#ffdcc5",
+              "secondary": "#a23f00",
+              "secondary-fixed": "#ffdbcd",
+              "surface-container-highest": "#e6e2dc",
+              "tertiary-fixed": "#ffdf9a",
+              "on-error": "#ffffff",
+              "on-tertiary-container": "#4c3800",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#351000",
+              "on-primary-fixed": "#301400",
+              "surface-bright": "#fdf9f3",
+              "on-background": "#1c1c18"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "sans-serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #fdf9f3;
+        font-family: 'Manrope', sans-serif;
+        overflow-x: hidden;
+      }
+      .warm-glow {
+        background: radial-gradient(circle at center, rgba(246, 138, 47, 0.15) 0%, rgba(253, 249, 243, 0) 70%);
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+      }
+      .ghost-border {
+        outline: 1px solid rgba(219, 194, 178, 0.2);
+      }
+      .sunset-gradient {
+        background: linear-gradient(135deg, #944a00 0%, #f68a2f 100%);
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center relative selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Background Decorative Elements -->
+<div class="fixed top-[-10%] right-[-5%] w-[500px] h-[500px] warm-glow rounded-full pointer-events-none"></div>
+<div class="fixed bottom-[-15%] left-[-10%] w-[600px] h-[600px] warm-glow rounded-full pointer-events-none opacity-60"></div>
+<!-- Main Navigation (Hidden as per Transactional Rule, but using TopNavBar logic if needed for branding) -->
+<div class="fixed top-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+<div class="text-3xl font-black text-orange-700 tracking-tighter flex items-center gap-2">
+<span>🍊</span>
+<span>意配</span>
+</div>
+</div>
+<!-- Auth Canvas -->
+<main class="w-full max-w-lg px-6 relative z-10">
+<!-- Central Floating Card -->
+<div class="glass-card ghost-border rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex flex-col items-center text-center">
+<!-- Icon/Shield Visual -->
+<div class="w-20 h-20 sunset-gradient rounded-full flex items-center justify-center mb-8 shadow-lg shadow-orange-500/20">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="verified_user">verified_user</span>
+</div>
+<!-- Title & Subtitle -->
+<h1 class="text-3xl font-bold font-headline text-on-surface tracking-tight mb-4">校园身份认证</h1>
+<p class="text-on-surface-variant leading-relaxed mb-10 max-w-xs">为了保持社交环境的纯粹，请使用 HEU 校园邮箱认证</p>
+<!-- Form -->
+<form class="w-full space-y-6">
+<div class="space-y-2 text-left">
+<label class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant ml-4" for="email">HEU 校园邮箱</label>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface placeholder:text-outline/40 focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 ghost-border" id="email" placeholder="yourname@hrbeu.edu.cn" type="email"/>
+<div class="absolute right-4 top-1/2 -translate-y-1/2">
+<span class="material-symbols-outlined text-outline/30" data-icon="alternate_email">alternate_email</span>
+</div>
+</div>
+</div>
+<!-- Verification Code Action -->
+<button class="w-full sunset-gradient text-white font-bold py-5 rounded-full shadow-lg shadow-orange-700/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group" type="button">
+<span>发送验证码</span>
+<span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</form>
+<!-- Privacy Policy & Trust Tags -->
+<div class="mt-10 pt-8 border-t border-orange-100/30 w-full">
+<div class="flex flex-wrap justify-center gap-4 mb-6">
+<div class="flex items-center gap-1.5 px-3 py-1.5 bg-secondary-fixed rounded-full text-on-secondary-fixed-variant text-xs font-semibold">
+<span class="material-symbols-outlined text-[14px]" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+                        隐私加密保护
+                    </div>
+<div class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high rounded-full text-on-surface-variant text-xs font-semibold">
+<span class="material-symbols-outlined text-[14px]" data-icon="visibility_off" style="font-variation-settings: 'FILL' 1;">visibility_off</span>
+                        完全匿名策略
+                    </div>
+</div>
+<p class="text-[12px] text-on-surface-variant/60 leading-relaxed px-4">
+                    您的个人信息仅用于验证哈工程学生身份，系统将对您的真实姓名进行混淆脱敏。认证完成后，您将正式解锁「🍊意配」所有心动功能。
+                </p>
+</div>
+</div>
+<!-- Secondary Action -->
+<div class="mt-8 text-center">
+<button class="text-on-surface-variant hover:text-primary font-medium text-sm transition-colors flex items-center justify-center gap-1 mx-auto">
+                遇到问题？联系管理员
+                <span class="material-symbols-outlined text-[16px]" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+</main>
+<!-- Bottom Aesthetic Glow -->
+<div class="fixed bottom-0 left-0 right-0 h-48 pointer-events-none">
+<div class="w-full h-full opacity-30 blur-[80px] bg-gradient-to-t from-orange-400 to-transparent"></div>
+</div>
+<!-- Visual Anchor Background Image (Bento style hint) -->
+<div class="fixed inset-0 -z-20 opacity-[0.03] grayscale pointer-events-none">
+<img alt="campus atmosphere" class="w-full h-full object-cover" data-alt="Blurred aesthetic view of a sunlit university campus hallway with students walking, soft warm light filtering through tall windows, editorial style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRLut5jslTVy0AUUns8rKAneqhUS4Uxgdy6pjVGKxPJIS2bXICE5-t0bByGjOQuZSMXG43GsISN0rDlutL2tRzhEfOsP5ypgcCSP1jD-ipm-yOJVvEvSxt8RaLQT74A1eo4Tg6yqEFpcad6jVqg62atEARz254q6K9mtYOjE5N_jbXps67nmyTZiDVp6bjnViaYl8s5uEqZHWtMNxMXg0y8HLn1zWbuwrcUvf3g6FCRMa-7Glv3Hm_TePfqto31ZnjN0lFekSzXTFr"/>
+</div>
+</body></html>
+
+<!-- 「🍊意配」项目首页 - 开启灵魂匹配之旅 -->
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error": "#ba1a1a",
+              "surface": "#fdf9f3",
+              "inverse-primary": "#ffb783",
+              "surface-dim": "#dddad4",
+              "on-tertiary-fixed-variant": "#5a4300",
+              "outline": "#887365",
+              "on-secondary-fixed-variant": "#7c2e00",
+              "outline-variant": "#dbc2b2",
+              "secondary-container": "#fc7127",
+              "primary-fixed-dim": "#ffb783",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#602e00",
+              "error-container": "#ffdad6",
+              "secondary-fixed-dim": "#ffb595",
+              "on-primary": "#ffffff",
+              "on-surface": "#1c1c18",
+              "on-tertiary-fixed": "#251a00",
+              "tertiary": "#785a00",
+              "background": "#fdf9f3",
+              "on-secondary-container": "#5c2000",
+              "on-error-container": "#93000a",
+              "tertiary-fixed-dim": "#f8be00",
+              "primary-container": "#f68a2f",
+              "on-surface-variant": "#554337",
+              "on-primary-fixed-variant": "#713700",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f7f3ed",
+              "surface-container-high": "#ebe8e2",
+              "surface-container": "#f1ede7",
+              "primary": "#944a00",
+              "inverse-surface": "#31302d",
+              "surface-tint": "#944a00",
+              "surface-variant": "#e6e2dc",
+              "tertiary-container": "#d09e00",
+              "inverse-on-surface": "#f4f0ea",
+              "primary-fixed": "#ffdcc5",
+              "secondary": "#a23f00",
+              "secondary-fixed": "#ffdbcd",
+              "surface-container-highest": "#e6e2dc",
+              "tertiary-fixed": "#ffdf9a",
+              "on-error": "#ffffff",
+              "on-tertiary-container": "#4c3800",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#351000",
+              "on-primary-fixed": "#301400",
+              "surface-bright": "#fdf9f3",
+              "on-background": "#1c1c18"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "sans-serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1rem", "2xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #fdf9f3;
+            color: #1c1c18;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .orange-glow {
+            background: linear-gradient(135deg, #944a00 0%, #f68a2f 100%);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% -20%, rgba(246, 138, 47, 0.15) 0%, rgba(253, 249, 243, 0) 60%);
+        }
+        .floating-button {
+            box-shadow: 0 8px 32px rgba(148, 74, 0, 0.25);
+        }
+    </style>
+</head>
+<body class="selection:bg-primary-fixed selection:text-primary min-h-screen relative overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<nav class="sticky top-4 mx-auto w-[95%] max-w-7xl rounded-2xl bg-white/60 dark:bg-stone-900/60 backdrop-blur-3xl outline outline-1 outline-orange-200/15 dark:outline-stone-700/20 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex justify-between items-center px-8 py-4 z-50">
+<div class="text-2xl font-black text-orange-700 dark:text-orange-500 tracking-tighter">🍊意配</div>
+<div class="hidden md:flex gap-8 items-center font-manrope font-medium text-sm tracking-tight text-stone-600 dark:text-stone-400">
+<a class="text-orange-700 dark:text-orange-400 font-bold border-b-2 border-orange-500 pb-1" href="#">首页</a>
+<a class="hover:text-orange-600 transition-colors" href="#">问卷</a>
+<a class="hover:text-orange-600 transition-colors" href="#">我的匹配</a>
+</div>
+<div class="flex items-center gap-4 text-orange-600 dark:text-orange-400">
+<button class="p-2 hover:bg-orange-50/50 dark:hover:bg-stone-800/50 rounded-lg transition-all active:scale-95 duration-200 ease-out">
+<span class="material-symbols-outlined">school</span>
+</button>
+<button class="p-2 hover:bg-orange-50/50 dark:hover:bg-stone-800/50 rounded-lg transition-all active:scale-95 duration-200 ease-out">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-orange-50/50 dark:hover:bg-stone-800/50 rounded-lg transition-all active:scale-95 duration-200 ease-out">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</nav>
+<main class="relative z-10 pt-12 pb-32 hero-gradient">
+<!-- Hero Section -->
+<section class="max-w-7xl mx-auto px-6 text-center mb-24">
+<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-bold mb-8 outline outline-1 outline-orange-200/30">
+<span class="material-symbols-outlined text-[14px]">stars</span>
+                HEU 专属社交实验
+            </div>
+<h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-on-surface mb-8 leading-[1.1]">
+                遇见 HEU <br/>
+<span class="text-transparent bg-clip-text orange-glow">懂你的灵魂</span>
+</h1>
+<p class="text-lg md:text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed font-medium">
+                在工科的世界里，用数据为你精准匹配那颗独一无二的灵魂。拒绝无效社交，让缘分在哈工程的校园里自然生长。
+            </p>
+</section>
+<!-- Bento Grid Concept Cards -->
+<section class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Card 1: 慢社交 -->
+<div class="bg-surface-container-low p-10 rounded-2xl flex flex-col gap-6 group hover:bg-surface-container transition-all duration-500">
+<div class="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-700 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-3xl">inventory_2</span>
+</div>
+<div>
+<h3 class="text-2xl font-bold text-on-surface mb-3">慢社交</h3>
+<p class="text-on-surface-variant leading-relaxed">拒绝快餐式交友，每周一次精心筛选的灵魂盲盒。在快节奏的大学生活里，我们为你按下暂停键。</p>
+</div>
+<div class="mt-auto pt-4 overflow-hidden rounded-xl h-40">
+<img class="w-full h-full object-cover rounded-xl transition-transform duration-700 group-hover:scale-105" data-alt="minimalist aesthetic photo of a sealed wax-stamped envelope on a wooden desk with warm morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCST2FrGWvQwPDPWbj1SOizAXtM8raEpZ1BH-stOcJAGC3o7L4hxAbWqDbWiHSAgwIw8sVtOlvNpL48tiESysqawkaljJdJLPRwHNTgdzirHq3RlSOhUfaIaFOxhbJ9dK06QxYX1ifn4ZuQhnRhp1YYHaIjg8ACQ28lslDM5opHBf9GbWxHHBIvqsPQ2d7tJ5c2Myf7LQlHx-lRGcX0XlDE0jRY3aZZssyiAWuhpm45BI5JlER4OzTH6pY_GQWdbZKVK1QKMe1ev6uB"/>
+</div>
+</div>
+<!-- Card 2: 数据化浪漫 -->
+<div class="bg-surface-container-highest p-10 rounded-2xl flex flex-col gap-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-orange-400/10 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
+<div class="w-14 h-14 rounded-2xl bg-orange-200 flex items-center justify-center text-orange-800">
+<span class="material-symbols-outlined text-3xl">analytics</span>
+</div>
+<div>
+<h3 class="text-2xl font-bold text-on-surface mb-3">数据化浪漫</h3>
+<p class="text-on-surface-variant leading-relaxed">基于 32 个维度的心理学建模与 MBTI 契合度雷达。让感性的相遇，拥有理性的共鸣基础。</p>
+</div>
+<div class="mt-auto bg-white/40 backdrop-blur-md rounded-2xl p-6 outline outline-1 outline-orange-200/20">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold text-orange-800">灵魂契合度指数</span>
+<span class="text-lg font-black text-orange-700">98.2%</span>
+</div>
+<div class="space-y-3">
+<div class="h-1.5 w-full bg-stone-200 rounded-full overflow-hidden">
+<div class="h-full orange-glow w-[92%] rounded-full"></div>
+</div>
+<div class="h-1.5 w-full bg-stone-200 rounded-full overflow-hidden">
+<div class="h-full orange-glow w-[85%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: 纯粹校园 -->
+<div class="bg-surface-container-low p-10 rounded-2xl flex flex-col gap-6 group hover:bg-surface-container transition-all duration-500">
+<div class="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-700">
+<span class="material-symbols-outlined text-3xl">verified_user</span>
+</div>
+<div>
+<h3 class="text-2xl font-bold text-on-surface mb-3">纯粹校园</h3>
+<p class="text-on-surface-variant leading-relaxed">仅限 HEU 校园邮箱认证，严格杜绝社会人士。这里只有最纯粹的学子情谊与工程大回忆。</p>
+</div>
+<div class="mt-auto pt-4 flex -space-x-4">
+<div class="w-16 h-16 rounded-full border-4 border-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a young smiling college student wearing glasses on a modern campus background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEd78ikM7Dk0t8jsDZQaD_G_XFj2Jt6CTt29F4y_4gvRj52G3CywFdIxbaDfIGTopqscmmlSJyjHqE-ix-JCOH_83_a05q6JchQntnmd4FtDTMSqu1zEXhgckspOZB2tFfcLUCQs8pSMB5lmRkUq9ImyY8RJUTBNLOYoEQ_W50tHFcZc1u4iUMAyKrCmrCGc6W_jDrPoTgjnWjIwOPjipMnUjEGiCDlaR2mlpAnk5uk9WulKpyG8y0UEW9wKbf9aeh8eY3SUDkgTT9"/>
+</div>
+<div class="w-16 h-16 rounded-full border-4 border-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a friendly young man university student with short hair sunny outdoor campus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3_mniPaqOUtqGhssuff9Z38x4GkUQlLhQjRR_BkatVnxQvGTveXApRyZsT27k749RDy_xkuZCsicNspWS4l3kkOB_pnM-B6y6HsrvfHDZMVUaS5MPlNPebmgCxlAyS7O4oFIuOqHksQqIVzoTdN9N-YQ9HWYmKpHd3KEexdSaNsj9m4LZ7BEsFFOY9E0Sfmecd5O3BSOBWdpbo43hqrqPnA2CecNlUDA-Tur4JF2OyCj6YsgiQ-7nUgmxeLTibM-3qXDi8UnSEfBr"/>
+</div>
+<div class="w-16 h-16 rounded-full border-4 border-surface flex items-center justify-center bg-orange-500 text-white font-bold text-xs">+12k</div>
+</div>
+</div>
+</section>
+<!-- Decoration Elements (Prism Light) -->
+<div class="absolute top-[20%] -left-64 w-[600px] h-[600px] bg-orange-200/20 blur-[120px] rounded-full -z-10"></div>
+<div class="absolute top-[60%] -right-64 w-[500px] h-[500px] bg-primary/10 blur-[100px] rounded-full -z-10"></div>
+</main>
+<!-- Floating Call to Action -->
+<div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[60]">
+<button class="orange-glow floating-button text-white px-8 py-5 rounded-full flex items-center gap-3 font-bold text-lg hover:scale-105 active:scale-95 transition-all duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">favorite</span>
+            开启我的灵魂盲盒
+        </button>
+</div>
+<!-- Mobile Navigation (Bottom Nav) -->
+<div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full bg-white/60 dark:bg-stone-900/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(28,28,24,0.08)] flex justify-around items-center py-3 px-6 z-50 tonal-shift bg-stone-100/20 dark:bg-stone-800/20">
+<div class="flex flex-col items-center justify-center bg-gradient-to-tr from-orange-700 to-orange-400 text-white rounded-full w-12 h-12 shadow-lg shadow-orange-500/30 tap-highlight-none active:scale-90 duration-150">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[11px] font-semibold font-manrope">发现</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 w-12 h-12 hover:scale-110 transition-transform tap-highlight-none active:scale-90 duration-150">
+<span class="material-symbols-outlined">favorite</span>
+<span class="text-[11px] font-semibold font-manrope">匹配</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 w-12 h-12 hover:scale-110 transition-transform tap-highlight-none active:scale-90 duration-150">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[11px] font-semibold font-manrope">我的</span>
+</div>
+</div>
+<!-- Footer Space Filler -->
+<footer class="py-20 text-center text-on-surface-variant/40 text-sm">
+<p>© 2024 🍊意配 | HEU 校园专属社交平台</p>
+</footer>
+</body></html>
+
+<!-- 「🍊意配」心理问卷 - 构建你的灵魂模型 -->
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>🍊意配 - 多维心理问卷</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error": "#ba1a1a",
+              "surface": "#fdf9f3",
+              "inverse-primary": "#ffb783",
+              "surface-dim": "#dddad4",
+              "on-tertiary-fixed-variant": "#5a4300",
+              "outline": "#887365",
+              "on-secondary-fixed-variant": "#7c2e00",
+              "outline-variant": "#dbc2b2",
+              "secondary-container": "#fc7127",
+              "primary-fixed-dim": "#ffb783",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#602e00",
+              "error-container": "#ffdad6",
+              "secondary-fixed-dim": "#ffb595",
+              "on-primary": "#ffffff",
+              "on-surface": "#1c1c18",
+              "on-tertiary-fixed": "#251a00",
+              "tertiary": "#785a00",
+              "background": "#fdf9f3",
+              "on-secondary-container": "#5c2000",
+              "on-error-container": "#93000a",
+              "tertiary-fixed-dim": "#f8be00",
+              "primary-container": "#f68a2f",
+              "on-surface-variant": "#554337",
+              "on-primary-fixed-variant": "#713700",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f7f3ed",
+              "surface-container-high": "#ebe8e2",
+              "surface-container": "#f1ede7",
+              "primary": "#944a00",
+              "inverse-surface": "#31302d",
+              "surface-tint": "#944a00",
+              "surface-variant": "#e6e2dc",
+              "tertiary-container": "#d09e00",
+              "inverse-on-surface": "#f4f0ea",
+              "primary-fixed": "#ffdcc5",
+              "secondary": "#a23f00",
+              "secondary-fixed": "#ffdbcd",
+              "surface-container-highest": "#e6e2dc",
+              "tertiary-fixed": "#ffdf9a",
+              "on-error": "#ffffff",
+              "on-tertiary-container": "#4c3800",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#351000",
+              "on-primary-fixed": "#301400",
+              "surface-bright": "#fdf9f3",
+              "on-background": "#1c1c18"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.grain-overlay {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuDo6uoBxFV0cdf_3bXQvX2hylvypzl9CgzE2KHpRlJ_0K8PWjhtgrjCC6SCt-YzcmEFvohJ5iEpTmdB0Gt5e3Hf20t8BFSoNS4JaQGqdc7GPD_r4FnPU_u-cL5KNW0_nbIzDBeYISwuBXdF91dhEYl9oVogSri-mI0QqoKOv3Dwj-5qseULzNq8NNrVsHy7_kn-BXd9uQ1vmtOn2gcm4oPmsGxqU62HNV0zR2TPracztkU5MEkQh-Q49dNMHIiFtErLRtfspGRGT6a_);
+    opacity: 0.03;
+    pointer-events: none
+    }
+.ios-blur {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px)
+    }
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent
+    }
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(148, 74, 0, 0.2);
+    cursor: pointer;
+    margin-top: -14px;
+    border: 4px solid #944a00
+    }
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: #dbc2b2;
+    border-radius: 2px
+    }
+.spatial-card {
+    transform: perspective(1000px) rotatex(2deg)
+    }</style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-fixed min-h-screen relative overflow-x-hidden">
+<div class="fixed inset-0 grain-overlay z-0"></div>
+<!-- Top Navigation Anchor -->
+<header class="sticky top-4 mx-auto w-[95%] max-w-7xl rounded-2xl bg-white/60 dark:bg-stone-900/60 backdrop-blur-3xl outline outline-1 outline-orange-200/15 dark:outline-stone-700/20 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex justify-between items-center px-8 py-4 z-50">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-black text-orange-700 dark:text-orange-500 tracking-tighter">🍊意配</span>
+<div class="h-4 w-px bg-outline-variant/30 mx-2"></div>
+<span class="text-sm font-semibold text-on-surface-variant tracking-wide">问卷系统</span>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-stone-600 dark:text-stone-400 hover:text-orange-600 transition-colors font-manrope font-medium text-sm tracking-tight" href="#">首页</a>
+<a class="text-orange-700 dark:text-orange-400 font-bold border-b-2 border-orange-500 pb-1 font-manrope text-sm tracking-tight" href="#">问卷</a>
+<a class="text-stone-600 dark:text-stone-400 hover:text-orange-600 transition-colors font-manrope font-medium text-sm tracking-tight" href="#">我的匹配</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-orange-50/50 p-2 rounded-lg transition-all active:scale-95">school</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-orange-50/50 p-2 rounded-lg transition-all active:scale-95">notifications</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a smiling young university student with soft natural lighting and warm skin tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5zNLFUhqjnUPNG0TyHNUwlOjNgvjP8lo644mknxP_z6j2rGTJAHQ66hpM4-wv-SWur6cpZbAHYpKPbqcFLWywSFfZGovDNAf_92H3tXQ8AEt5tl-uYd2BsQis9TFQUE17uUoOhHLaxpyCWrbW7bM1XVucjoznugCWIPIF5_PeOr9xk5iVzPv_Yd3NoDlEzEDIodn0490kXTkb9iYDwGEYZa7a4n2z7IcKonCqm5aWX4XjI93Zgd_WTyGzILdfrv6k5grR2wyelgCW"/>
+</div>
+</div>
+</header>
+<!-- Progress Bar (Floating Slim) -->
+<div class="fixed top-[100px] left-1/2 -translate-x-1/2 w-[80%] max-w-2xl z-40">
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[65%] rounded-full shadow-[0_0_12px_rgba(246,138,47,0.4)]"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Step 12 of 18</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">65% Completed</span>
+</div>
+</div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 pt-32 pb-40 px-6 max-w-4xl mx-auto min-h-screen flex flex-col items-center justify-center">
+<!-- Spatial Question Cluster -->
+<div class="w-full space-y-12">
+<!-- Hero Heading Section -->
+<div class="text-center space-y-4">
+<span class="inline-block px-4 py-1.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant text-xs font-bold tracking-widest uppercase">性格维度 - 大五人格</span>
+<h1 class="text-4xl md:text-5xl font-extrabold text-on-surface tracking-tight leading-tight">
+                    在社交活动中，<br/>你通常如何寻找能量？
+                </h1>
+<p class="text-on-surface-variant/80 max-w-lg mx-auto leading-relaxed">
+                    这项指标将帮助我们分析你的 <span class="text-primary font-bold">外向性 (Extraversion)</span> 指数，为你匹配互补或共鸣的灵魂。
+                </p>
+</div>
+<!-- Interaction Card (iOS 26 Spatial Style) -->
+<div class="spatial-card w-full bg-surface-container-lowest/80 ios-blur p-8 md:p-12 rounded-[2rem] shadow-[0_32px_64px_-12px_rgba(28,28,24,0.08)] outline outline-1 outline-white/40">
+<!-- Main Slider Logic -->
+<div class="space-y-16">
+<div class="flex flex-col md:flex-row items-center gap-8">
+<div class="flex-1 text-center md:text-right">
+<div class="w-16 h-16 mx-auto md:ml-auto mb-4 bg-surface-container-low rounded-2xl flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-3xl">self_improvement</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-2">独处充电</h3>
+<p class="text-sm text-on-surface-variant">安静的环境让我感到放松和恢复活力</p>
+</div>
+<div class="w-full md:w-1/2 flex flex-col items-center gap-6">
+<input class="cursor-pointer" max="100" min="0" type="range" value="70"/>
+<div class="flex justify-between w-full px-2">
+<span class="h-2 w-0.5 bg-outline-variant/40"></span>
+<span class="h-4 w-0.5 bg-outline-variant/40"></span>
+<span class="h-2 w-0.5 bg-outline-variant/40"></span>
+<span class="h-4 w-0.5 bg-outline-variant/40"></span>
+<span class="h-6 w-1 bg-primary/20"></span>
+<span class="h-4 w-0.5 bg-outline-variant/40"></span>
+<span class="h-2 w-0.5 bg-outline-variant/40"></span>
+<span class="h-4 w-0.5 bg-outline-variant/40"></span>
+<span class="h-2 w-0.5 bg-outline-variant/40"></span>
+</div>
+</div>
+<div class="flex-1 text-center md:text-left">
+<div class="w-16 h-16 mx-auto md:mr-auto mb-4 bg-primary-fixed rounded-2xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">groups</span>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-2">社交共鸣</h3>
+<p class="text-sm text-on-surface-variant">与他人交流互动让我感到精神振奋</p>
+</div>
+</div>
+<!-- Weight Control (Asymmetric Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-6 rounded-2xl flex items-center justify-between group hover:bg-surface-container-high transition-all">
+<div class="space-y-1">
+<p class="text-xs font-bold text-primary tracking-widest uppercase">维度权重</p>
+<p class="text-lg font-bold text-on-surface">我非常看重这一点</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-8 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl flex items-center gap-6 hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">priority_high</span>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase">优先等级</span>
+<span class="text-xs font-bold text-primary">高</span>
+</div>
+<div class="h-1.5 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[85%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Navigation Shell (Bottom Navigation for Mobile) -->
+<nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full bg-white/60 dark:bg-stone-900/60 backdrop-blur-2xl tonal-shift bg-stone-100/20 dark:bg-stone-800/20 shadow-[0_8px_32px_rgba(28,28,24,0.08)] flex justify-around items-center py-3 px-6 z-50">
+<button class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 w-12 h-12 hover:scale-110 transition-transform active:scale-90">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[11px] font-semibold font-manrope">发现</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-gradient-to-tr from-orange-700 to-orange-400 text-white rounded-full w-12 h-12 shadow-lg shadow-orange-500/30 hover:scale-110 transition-transform active:scale-90">
+<span class="material-symbols-outlined">favorite</span>
+<span class="text-[11px] font-semibold font-manrope">匹配</span>
+</button>
+<button class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 w-12 h-12 hover:scale-110 transition-transform active:scale-90">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[11px] font-semibold font-manrope">我的</span>
+</button>
+</nav>
+<!-- Floating Action Cluster -->
+<div class="fixed bottom-12 left-0 right-0 z-40 flex flex-col items-center gap-6">
+<!-- Depth Context Tooltip -->
+<div class="px-6 py-2 bg-on-surface text-surface text-sm font-medium rounded-full ios-blur bg-opacity-90 shadow-2xl flex items-center gap-2 transform -translate-y-4 opacity-0 transition-all pointer-events-none group-hover:opacity-100 group-hover:translate-y-0">
+<span>即将进入：生活习惯测试</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+<!-- Main Button -->
+<button class="group relative px-12 py-5 bg-gradient-to-r from-primary to-primary-container text-white rounded-full font-bold text-lg shadow-[0_20px_40px_-8px_rgba(148,74,0,0.4)] hover:shadow-[0_25px_50px_-12px_rgba(148,74,0,0.6)] transition-all active:scale-95 flex items-center gap-3">
+<span>下一题</span>
+<span class="material-symbols-outlined">arrow_forward_ios</span>
+<!-- Glow Effect -->
+<div class="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+</button>
+<button class="text-on-surface-variant/60 text-sm font-semibold hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-lg">undo</span>
+<span>返回上一题</span>
+</button>
+</div>
+<!-- Decorative Spatial Elements -->
+<div class="fixed -top-20 -right-20 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="fixed -bottom-40 -left-20 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[120px] pointer-events-none"></div>
+</body></html>
