@@ -180,7 +180,7 @@ const WaitingPage: React.FC = () => {
               </div>
               <div className="text-left">
                 <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider">本周参与</p>
-                <p className="font-bold text-white">{isJoined ? '已确认参与本次匹配' : '本周未参与匹配'}</p>
+                <p className="font-bold text-white">{isJoined ? '已参与本次匹配' : '本周未参与匹配'}</p>
               </div>
             </div>
             <div className="flex flex-col items-center">

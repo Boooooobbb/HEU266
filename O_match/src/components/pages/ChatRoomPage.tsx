@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { chatApi } from '@/api';
 import { hasSupabaseConfig } from '@/lib/supabase';
@@ -341,34 +341,99 @@ const ChatRoomPage: React.FC = () => {
     await handleSendContact(platform, targetMethod?.value || '');
   };
 
+  const mobileBallSize = 56;
+  const mobilePanelApproxHeight = 240;
+  const dragThresholdPx = 6;
+
+  const partnerDisplayName = chatContext?.partnerNickname?.trim() || '橘子同学';
+  const partnerStageText = chatContext?.partnerStage
+    ? (stageLabelMap[chatContext.partnerStage] || chatContext.partnerStage)
+    : '阶段未公开';
+  const partnerMatchRateText = typeof chatContext?.matchRate === 'number'
+    ? `${Math.round(chatContext.matchRate)}% 灵魂契合`
+    : '灵魂契合待生成';
+
+  const [mobileWidget, setMobileWidget] = useState(() => {
+    const initialX = typeof window === 'undefined' ? 16 : Math.max(16, window.innerWidth - mobileBallSize - 16);
+    const initialY = typeof window === 'undefined'
+      ? 220
+      : Math.max(120, window.innerHeight - mobileBallSize - 220);
+
+    return {
+      x: initialX,
+      y: initialY,
+      expanded: false,
+    };
+  });
+
+  const mobileDragRef = useRef({
+    pointerId: -1,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+    moved: false,
+  });
+
+  const clampMobileWidget = useCallback((x: number, y: number) => {
+    const viewportW = typeof window === 'undefined' ? 375 : window.innerWidth;
+    const viewportH = typeof window === 'undefined' ? 812 : window.innerHeight;
+
+    const minX = 12;
+    const maxX = Math.max(minX, viewportW - mobileBallSize - 12);
+    const minY = 88;
+    const maxY = Math.max(
+      minY,
+      viewportH - mobileBallSize - 120
+    );
+
+    const clampedX = Math.min(maxX, Math.max(minX, x));
+    const clampedY = Math.min(maxY, Math.max(minY, y));
+
+    return { x: clampedX, y: clampedY };
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => {
+      setMobileWidget((prev) => {
+        const nextPos = clampMobileWidget(prev.x, prev.y);
+        if (nextPos.x === prev.x && nextPos.y === prev.y) return prev;
+        return { ...prev, ...nextPos };
+      });
+    };
+
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [clampMobileWidget]);
+
   return (
-    <div className="relative z-10 pt-52 md:pt-44 pb-24">
-      {/* Floating Match Actions */}
-      <div className="fixed top-28 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-7xl pointer-events-none">
-        <div className="rounded-[999px] px-5 py-4 flex items-center justify-between gap-4 flex-wrap shadow-[0_16px_40px_-16px_rgba(148,74,0,0.55)] pointer-events-auto border border-orange-300/70 bg-gradient-to-br from-orange-200/88 via-orange-100/88 to-orange-50/88 backdrop-blur-xl">
+    <div className="relative z-10 pt-32 md:pt-44 pb-24">
+      {/* Floating Match Actions (Desktop) */}
+      <div className="hidden md:block fixed top-28 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-7xl pointer-events-none">
+        <div className="rounded-[999px] px-5 py-4 flex flex-col items-start md:flex-row md:flex-wrap md:items-center md:justify-between gap-4 shadow-[0_16px_40px_-16px_rgba(148,74,0,0.55)] pointer-events-auto border border-orange-300/70 bg-gradient-to-br from-orange-200/88 via-orange-100/88 to-orange-50/88 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center text-2xl shadow border-2 border-white">🍊</div>
             <div>
-              <div className="font-bold text-on-surface">橘子同学（半匿名）</div>
+              <div className="font-bold text-on-surface">{partnerDisplayName}</div>
               <div className="text-xs text-on-surface-variant">
-                98% 灵魂契合 · {chatContext?.partnerStage ? (stageLabelMap[chatContext.partnerStage] || chatContext.partnerStage) : '阶段未公开'}
+                {partnerMatchRateText} · {partnerStageText}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4 flex-wrap justify-end">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50/95 border border-orange-300/60 rounded-full">
+          <div className="w-full md:w-auto grid grid-cols-2 gap-2 md:flex md:items-center md:gap-4 md:flex-wrap md:justify-end">
+            <div className="w-full md:w-auto flex items-center justify-center md:justify-start gap-2 px-3 py-1.5 bg-orange-50/95 border border-orange-300/60 rounded-full">
               <span className="material-symbols-outlined text-orange-700 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
               <span className="text-xs font-bold text-orange-800">{countdown.formatted}</span>
             </div>
             <button
               onClick={handleEndMatch}
-              className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
+              className="w-full md:w-auto px-4 py-2 text-xs font-bold text-white rounded-xl bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
             >
               结束匹配
             </button>
             <button
               onClick={handleReportPartner}
-              className="px-4 py-1.5 text-xs font-bold text-[#A64B00] rounded-full border border-[#F2C28F] bg-[#FFE8CC] hover:bg-[#FFD9B0] transition-colors shadow-sm"
+              className="w-full md:w-auto px-4 py-1.5 text-xs font-bold text-[#A64B00] rounded-full border border-[#F2C28F] bg-[#FFE8CC] hover:bg-[#FFD9B0] transition-colors shadow-sm"
             >
               举报
             </button>
@@ -376,7 +441,7 @@ const ChatRoomPage: React.FC = () => {
               <button
                 onClick={handleUnblockPartner}
                 disabled={blocking}
-                className="px-4 py-1.5 text-xs font-bold text-orange-900 rounded-full border border-orange-300/80 bg-orange-100/90 hover:bg-orange-50 transition-colors shadow-sm disabled:opacity-40"
+                className="w-full md:w-auto px-4 py-1.5 text-xs font-bold text-orange-900 rounded-full border border-orange-300/80 bg-orange-100/90 hover:bg-orange-50 transition-colors shadow-sm disabled:opacity-40"
               >
                 {blocking ? '处理中...' : '取消拉黑'}
               </button>
@@ -384,12 +449,128 @@ const ChatRoomPage: React.FC = () => {
               <button
                 onClick={handleBlockPartner}
                 disabled={blocking}
-                className="px-4 py-1.5 text-xs font-bold text-white rounded-full border border-orange-500/70 bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-40"
+                className="w-full md:w-auto px-4 py-1.5 text-xs font-bold text-white rounded-full border border-orange-500/70 bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-40"
               >
                 {blocking ? '处理中...' : '拉黑'}
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Floating Match Actions (Mobile) */}
+      <div
+        className="md:hidden fixed z-[60]"
+        style={{ left: mobileWidget.x, top: mobileWidget.y }}
+      >
+        <div className="relative">
+          {mobileWidget.expanded && (
+            <div
+              className="absolute right-0 bottom-full mb-3 w-[min(92vw,320px)] rounded-3xl p-4 shadow-[0_16px_40px_-16px_rgba(148,74,0,0.55)] border border-orange-300/70 bg-gradient-to-br from-orange-200/88 via-orange-100/88 to-orange-50/88 backdrop-blur-xl"
+              style={{ maxHeight: `min(60vh, ${mobilePanelApproxHeight}px)` }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary-fixed flex items-center justify-center text-xl shadow border-2 border-white">🍊</div>
+                <div className="min-w-0">
+                  <div className="font-bold text-on-surface truncate">{partnerDisplayName}</div>
+                  <div className="text-xs text-on-surface-variant truncate">
+                    {partnerMatchRateText} · {partnerStageText}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 bg-orange-50/95 border border-orange-300/60 rounded-2xl">
+                  <span
+                    className="material-symbols-outlined text-orange-700 text-sm"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    schedule
+                  </span>
+                  <span className="text-xs font-bold text-orange-800">{countdown.formatted}</span>
+                </div>
+
+                {isBlocked ? (
+                  <button
+                    onClick={handleUnblockPartner}
+                    disabled={blocking}
+                    className="w-full px-4 py-2 text-xs font-bold text-orange-900 rounded-2xl border border-orange-300/80 bg-orange-100/90 hover:bg-orange-50 transition-colors shadow-sm disabled:opacity-40"
+                  >
+                    {blocking ? '处理中...' : '取消拉黑'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleBlockPartner}
+                    disabled={blocking}
+                    className="w-full px-4 py-2 text-xs font-bold text-white rounded-2xl border border-orange-500/70 bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-40"
+                  >
+                    {blocking ? '处理中...' : '拉黑'}
+                  </button>
+                )}
+
+                <button
+                  onClick={handleReportPartner}
+                  className="w-full px-4 py-2 text-xs font-bold text-[#A64B00] rounded-2xl border border-[#F2C28F] bg-[#FFE8CC] hover:bg-[#FFD9B0] transition-colors shadow-sm"
+                >
+                  举报
+                </button>
+
+                <button
+                  onClick={handleEndMatch}
+                  className="col-span-2 w-full px-4 py-2 text-xs font-bold text-white rounded-2xl bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
+                >
+                  结束匹配
+                </button>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className={`relative w-14 h-14 rounded-full glass-orb border border-white/70 flex items-center justify-center text-2xl select-none touch-none`}
+            data-expanded={mobileWidget.expanded}
+            aria-label={mobileWidget.expanded ? '收起匹配信息' : '展开匹配信息'}
+            onPointerDown={(event) => {
+              const target = event.currentTarget;
+              try {
+                target.setPointerCapture(event.pointerId);
+              } catch {
+                // ignore
+              }
+
+              mobileDragRef.current.pointerId = event.pointerId;
+              mobileDragRef.current.startX = event.clientX;
+              mobileDragRef.current.startY = event.clientY;
+              mobileDragRef.current.originX = mobileWidget.x;
+              mobileDragRef.current.originY = mobileWidget.y;
+              mobileDragRef.current.moved = false;
+            }}
+            onPointerMove={(event) => {
+              if (mobileDragRef.current.pointerId !== event.pointerId) return;
+
+              const dx = event.clientX - mobileDragRef.current.startX;
+              const dy = event.clientY - mobileDragRef.current.startY;
+
+              if (!mobileDragRef.current.moved && Math.hypot(dx, dy) > dragThresholdPx) {
+                mobileDragRef.current.moved = true;
+              }
+
+              const nextX = mobileDragRef.current.originX + dx;
+              const nextY = mobileDragRef.current.originY + dy;
+              const clamped = clampMobileWidget(nextX, nextY);
+              setMobileWidget((prev) => ({ ...prev, ...clamped }));
+            }}
+            onPointerUp={(event) => {
+              if (mobileDragRef.current.pointerId !== event.pointerId) return;
+              mobileDragRef.current.pointerId = -1;
+
+              if (!mobileDragRef.current.moved) {
+                setMobileWidget((prev) => ({ ...prev, expanded: !prev.expanded }));
+              }
+            }}
+          >
+            <span className="relative z-10">🍊</span>
+          </button>
         </div>
       </div>
 
@@ -438,7 +619,7 @@ const ChatRoomPage: React.FC = () => {
         {hint && <div className="text-green-600 text-sm text-center">{hint}</div>}
       </div>
 
-      <div className="fixed bottom-[104px] md:bottom-[120px] left-0 right-0 z-[45] px-4 md:px-0">
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+165px)] md:bottom-[120px] left-0 right-0 z-[45] px-4 md:px-0">
         <div className="mx-auto w-[92%] max-w-7xl">
           <div className="glass-card rounded-[999px] px-4 py-3 md:px-5 md:py-4 shadow-md border-white/60">
             <div className="flex flex-wrap gap-2">
@@ -479,19 +660,11 @@ const ChatRoomPage: React.FC = () => {
       </div>
 
       {/* Floating Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 md:px-0 pb-8 pt-4 bg-gradient-to-t from-[#fdf9f3] via-[#fdf9f3]/90 to-transparent z-50">
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] md:bottom-0 left-0 right-0 px-4 md:px-0 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-8 pt-4 bg-gradient-to-t from-[#fdf9f3] via-[#fdf9f3]/90 to-transparent z-50">
         <div className="mx-auto w-[92%] max-w-7xl">
           <div className="glass-card rounded-[2.5rem] p-2 shadow-lg flex items-center gap-2 border-white/70">
-            <div className="flex items-center gap-1 pl-2">
-              <button className="w-10 h-10 rounded-full hover:bg-white/80 transition-colors text-on-surface-variant flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">add_circle</span>
-              </button>
-              <button className="w-10 h-10 rounded-full hover:bg-white/80 transition-colors text-on-surface-variant flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">sentiment_satisfied</span>
-              </button>
-            </div>
             <input
-              className="flex-1 bg-transparent border-none rounded-2xl px-3 py-3 text-base focus:ring-0 placeholder:text-on-surface-variant/30 font-medium"
+              className="flex-1 bg-transparent border-none rounded-2xl px-4 py-3 text-base focus:ring-0 placeholder:text-on-surface-variant/30 font-medium"
               placeholder="回复 Orange..."
               type="text"
               value={inputValue}

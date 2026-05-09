@@ -26,6 +26,8 @@ export interface ChatContext {
   matchId: string;
   partnerId: string | null;
   partnerStage: string | null;
+  partnerNickname: string | null;
+  matchRate: number | null;
   isDemo: boolean;
 }
 
@@ -247,6 +249,8 @@ export const resolveChatContext = async (): Promise<ChatContext> => {
       matchId: 'demo-match',
       partnerId: null,
       partnerStage: null,
+      partnerNickname: null,
+      matchRate: null,
       isDemo: true,
     };
   }
@@ -257,6 +261,8 @@ export const resolveChatContext = async (): Promise<ChatContext> => {
       matchId: 'demo-match',
       partnerId: null,
       partnerStage: null,
+      partnerNickname: null,
+      matchRate: null,
       isDemo: true,
     };
   }
@@ -271,7 +277,7 @@ export const resolveChatContext = async (): Promise<ChatContext> => {
 
   const { data: matchData, error: matchError } = await supabase
     .from('matches')
-    .select('id, user_a_id, user_b_id, status, created_at')
+    .select('id, user_a_id, user_b_id, status, created_at, match_rate')
     .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`)
     .in('status', ['matched', 'pending'])
     .order('created_at', { ascending: false })
@@ -283,27 +289,35 @@ export const resolveChatContext = async (): Promise<ChatContext> => {
       matchId: 'demo-match',
       partnerId: null,
       partnerStage: null,
+      partnerNickname: null,
+      matchRate: null,
       isDemo: true,
     };
   }
 
   const partnerId = matchData.user_a_id === user.id ? matchData.user_b_id : matchData.user_a_id;
   let partnerStage: string | null = null;
+  let partnerNickname: string | null = null;
 
   if (partnerId) {
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('stage')
+      .select('stage, nickname')
       .eq('id', partnerId)
       .maybeSingle();
 
     partnerStage = (profileData?.stage as string | null | undefined) ?? null;
+    partnerNickname = (profileData?.nickname as string | null | undefined) ?? null;
   }
+
+  const matchRate = typeof matchData.match_rate === 'number' ? matchData.match_rate : null;
 
   const context = {
     matchId: matchData.id,
     partnerId: partnerId ?? null,
     partnerStage,
+    partnerNickname,
+    matchRate,
     isDemo: false,
   };
 
