@@ -171,25 +171,44 @@ function generateMatchReport(
 }
 
 /**
- * 检查历史匹配
+ * 批量获取所有候选人的历史匹配记录
+ * 返回一个 Set，包含所有已经匹配过的 (user_a_id, user_b_id) 对
  */
-async function hasPreviousMatch(
+async function getHistoricalMatchSet(
   client: any,
-  userIdA: string,
-  userIdB: string
-): Promise<boolean> {
-  const { data } = await client
-    .from("matches")
-    .select("id")
-    .or(
-      `user_a_id.eq.${userIdA},user_b_id.eq.${userIdA}`
-    )
-    .or(
-      `user_a_id.eq.${userIdB},user_b_id.eq.${userIdB}`
-    )
-    .limit(1);
+  userIds: string[]
+): Promise<Set<string>> {
+  const pairs = new Set<string>();
+  const PAGE_SIZE = 1000;
+  let page = 0;
 
-  return (data?.length ?? 0) > 0;
+  while (true) {
+    const { data, error } = await client
+      .from("matches")
+      .select("user_a_id, user_b_id")
+      .or(
+        userIds.map((id) => `user_a_id.eq.${id},user_b_id.eq.${id}`).join(",")
+      )
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+      .order("created_at");
+
+    if (error) {
+      console.error("Failed to fetch historical matches:", error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+
+    for (const m of data as any[]) {
+      const key =
+        m.user_a_id < m.user_b_id
+          ? `${m.user_a_id}-${m.user_b_id}`
+          : `${m.user_b_id}-${m.user_a_id}`;
+      pairs.add(key);
+    }
+    page++;
+  }
+
+  return pairs;
 }
 
 /**
@@ -320,10 +339,15 @@ async function runMatching(client: any, weekTag: string) {
       }
     }
 
-    // 6. 执行匹配算法
-    console.log("6. 执行匹配算法...");
+    // 6. 批量获取历史匹配记录（避免 O(n²) DB 查询）
+    console.log("6. 获取历史匹配记录...");
+    const historicalPairs = await getHistoricalMatchSet(
+      client,
+      candidates.map((c) => c.id)
+    );
+    console.log(`  Historical pairs found: ${historicalPairs.size}`);
 
-    // 检查历史匹配并过滤
+    // 过滤掉历史匹配过的用户对
     const filteredCandidates: CandidateUser[] = [];
     const validPairKeys = new Set<string>();
 
@@ -334,9 +358,7 @@ async function runMatching(client: any, weekTag: string) {
         const pairKey =
           a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
 
-        // 跳过历史匹配过的用户对
-        const hasPrevMatch = await hasPreviousMatch(client, a.id, b.id);
-        if (hasPrevMatch) continue;
+        if (historicalPairs.has(pairKey)) continue;
 
         validPairKeys.add(pairKey);
       }
@@ -363,12 +385,12 @@ async function runMatching(client: any, weekTag: string) {
 
     console.log(`Candidates after filtering: ${filteredCandidates.length}`);
 
+    // 7. 执行匹配算法
+    console.log("7. 执行匹配算法...");
     let matchResults: MatchResult[] = [];
 
-    // 根据用户池大小选择算法
     if (filteredCandidates.length <= 50) {
-      // 小规模用户池：使用 G-S 变体算法
-      console.log("Using Gale-Shapley algorithm...");
+      console.log("  Using Gale-Shapley algorithm...");
       matchResults = await runGaleShapleyMatching(
         filteredCandidates,
         weekTag,
@@ -376,7 +398,7 @@ async function runMatching(client: any, weekTag: string) {
       );
     } else {
       // 大规模用户池：分组后使用 Hungarian 算法
-      console.log("Using batch matching with Hungarian algorithm...");
+      console.log("  Using batch matching with Hungarian algorithm...");
       const groups = groupUsersByPreference(filteredCandidates);
       console.log(
         `Groups: malePreferFemale=${groups.malePreferFemale.length}, ` +
@@ -438,8 +460,8 @@ async function runMatching(client: any, weekTag: string) {
 
     console.log(`Match results: ${matchResults.length} pairs`);
 
-    // 7. 写入匹配结果和报告
-    console.log("7. 写入匹配结果...");
+    // 8. 写入匹配结果和报告
+    console.log("8. 写入匹配结果...");
     let matchesCreated = 0;
 
     for (const match of matchResults) {
@@ -522,11 +544,11 @@ async function runMatching(client: any, weekTag: string) {
 
     console.log(`匹配完成，创建了 ${matchesCreated} 个匹配`);
 
-    // 8. 清空本周 match_pool
-    console.log("8. 清空本周匹配池...");
+    // 9. 清空本周 match_pool
+    console.log("9. 清空本周匹配池...");
     await client.from("match_pool").delete().eq("week_tag", weekTag);
 
-    // 9. 统计未匹配用户
+    // 10. 统计未匹配用户
     const matchedUserIds = new Set<string>();
     for (const match of matchResults) {
       matchedUserIds.add(match.userAId);

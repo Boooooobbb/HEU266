@@ -474,7 +474,10 @@ export const sendPasswordResetEmail = async (email: string): Promise<SendCodeRes
     return { success: false, message: '当前开发模式未启用真实找回密码邮件，请连接 Supabase 后再使用' };
   }
 
-  const redirectTo = `${window.location.origin}/reset-password`;
+  const origin = window.location.hostname === 'localhost'
+    ? window.location.origin
+    : window.location.origin.replace(/^http:/, 'https:');
+  const redirectTo = `${origin}/reset-password`;
   const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
     redirectTo,
   });
