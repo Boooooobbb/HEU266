@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
-import { createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { useAuthStore } from '@/store';
 import { getCurrentUser } from '@/services/authService';
@@ -41,6 +41,34 @@ const ScrollToTopOnNavigate = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname, search]);
+
+  return <Outlet />;
+};
+
+const AuthRecoveryListener = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const setup = async () => {
+      const { supabase, hasSupabaseConfig } = await import('@/lib/supabase');
+      if (!hasSupabaseConfig || !supabase || cancelled) return;
+
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY' && session) {
+          navigate('/reset-password', { replace: true });
+        }
+      });
+
+      if (cancelled) {
+        data.subscription.unsubscribe();
+      }
+    };
+
+    setup();
+    return () => { cancelled = true; };
+  }, [navigate]);
 
   return <Outlet />;
 };
@@ -90,6 +118,8 @@ const RequireAuth = () => {
 // 路由配置
 export const router = createBrowserRouter([
   {
+    element: <AuthRecoveryListener />,
+    children: [{
     element: <ScrollToTopOnNavigate />,
     children: [
       {
@@ -206,6 +236,8 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  ],
+},
 ]);
 
 export default router;

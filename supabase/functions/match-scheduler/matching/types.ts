@@ -185,7 +185,7 @@ export const WEIGHTS = {
 } as const;
 
 export const MAX_MATCHES_PER_USER = 1; // 每个用户最多1个匹配
-export const MIN_SCORE_THRESHOLD = 55; // 最低匹配分数阈值
+export const MIN_SCORE_THRESHOLD = 40; // 最低匹配分数阈值
 
 // ============ 避雷检查结果 ============
 export interface BottomlineViolation {
