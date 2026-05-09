@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { resetPassword } from '@/services/authService';
 import { PASSWORD_RULE_MESSAGE, isValidPassword } from '@/utils/password';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,35 @@ const ResetPasswordPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (!hasSupabaseConfig || !supabase) {
+      setChecking(false);
+      return;
+    }
+
+    const client = supabase;
+    let cancelled = false;
+
+    const verifySession = async () => {
+      const { data, error: sessionError } = await client.auth.getSession();
+      if (cancelled) return;
+
+      if (sessionError || !data.session) {
+        setError('密码重置链接已失效，请重新获取');
+        window.setTimeout(() => {
+          if (!cancelled) navigate('/forgot-password', { replace: true });
+        }, 1500);
+        return;
+      }
+
+      setChecking(false);
+    };
+
+    verifySession();
+    return () => { cancelled = true; };
+  }, [navigate]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +102,11 @@ const ResetPasswordPage: React.FC = () => {
             <p className="text-on-surface-variant text-sm">输入新密码完成修改</p>
           </div>
 
+          {checking && (
+            <div className="text-on-surface-variant text-sm animate-pulse">验证身份中...</div>
+          )}
+
+          {!checking && (
           <form className="w-full space-y-6 text-left" onSubmit={handleResetPassword}>
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant ml-4">新密码</label>
@@ -129,6 +164,7 @@ const ResetPasswordPage: React.FC = () => {
               {loading ? '提交中...' : '更新密码'} <span className="material-symbols-outlined text-[20px]">lock_reset</span>
             </button>
           </form>
+          )}
 
           <div className="pt-8 border-t border-orange-100/30 w-full mt-10">
           </div>

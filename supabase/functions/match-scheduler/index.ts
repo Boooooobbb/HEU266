@@ -182,10 +182,10 @@ async function hasPreviousMatch(
     .from("matches")
     .select("id")
     .or(
-      `user_a_id.eq.${userIdA},user_a_id.eq.${userIdB}`
+      `user_a_id.eq.${userIdA},user_b_id.eq.${userIdA}`
     )
     .or(
-      `user_b_id.eq.${userIdA},user_b_id.eq.${userIdB}`
+      `user_a_id.eq.${userIdB},user_b_id.eq.${userIdB}`
     )
     .limit(1);
 
@@ -220,7 +220,8 @@ async function runMatching(client: any, weekTag: string) {
     const { data: profiles, error: profileError } = await client
       .from("profiles")
       .select("*")
-      .in("id", userIds);
+      .in("id", userIds)
+      .limit(50000);
 
     if (profileError) throw profileError;
     if (!profiles || profiles.length < 2) {
@@ -228,14 +229,26 @@ async function runMatching(client: any, weekTag: string) {
       return { success: true, matchesCreated: 0 };
     }
 
-    // 3. 获取问卷答案
+    // 3. 获取问卷答案（分页拉取，避免默认 1000 行截断）
     console.log("3. 获取问卷答案...");
-    const { data: answerRecords, error: answerError } = await client
-      .from("questionnaire_answers")
-      .select("user_id, module_id, question_id, answer_value")
-      .in("user_id", userIds);
+    const answerRecords: any[] = [];
+    const PAGE_SIZE = 1000;
+    let page = 0;
+    while (true) {
+      const { data: pageRecords, error: answerError } = await client
+        .from("questionnaire_answers")
+        .select("user_id, module_id, question_id, answer_value")
+        .in("user_id", userIds)
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+        .order("user_id");
 
-    if (answerError) throw answerError;
+      if (answerError) throw answerError;
+      if (!pageRecords || pageRecords.length === 0) break;
+
+      answerRecords.push(...pageRecords);
+      page++;
+    }
+    console.log(`  Fetched ${answerRecords.length} answer records across ${page} page(s)`);
 
     // 4. 构建用户数据
     console.log("4. 构建用户数据...");
@@ -297,6 +310,15 @@ async function runMatching(client: any, weekTag: string) {
     // 5. 预计算所有候选对分数
     console.log("5. 预计算匹配分数...");
     const scoreMatrix = buildScoreMatrix(candidates, calculatePairScore);
+
+    // 调试：打印每个候选人的分数
+    for (const [idA, row] of scoreMatrix.entries()) {
+      for (const [idB, score] of row.entries()) {
+        if (idA < idB) {
+          console.log(`  Score ${idA.substring(0,8)} <-> ${idB.substring(0,8)}: total=${score.total}, valueAlign=${score.dimensions.valueAlignment}, lifestyle=${score.dimensions.lifestyleFit}, personality=${score.dimensions.personalityMatch}, interest=${score.dimensions.interestOverlap}, expectation=${score.dimensions.expectationMatch}`);
+        }
+      }
+    }
 
     // 6. 执行匹配算法
     console.log("6. 执行匹配算法...");
@@ -517,6 +539,7 @@ async function runMatching(client: any, weekTag: string) {
       matchesCreated,
       unmatchedCount,
       totalCandidates: candidates.length,
+      filteredCandidates: filteredCandidates.length,
       weekTag,
     };
   } catch (error) {
