@@ -2,7 +2,7 @@
  * Supabase Edge Function: Match Scheduler
  *
  * 目标：每周执行一次匹配任务（每用户最多 1 个配对）
- * - 触发频率：每周五晚上 8 点 (Cron: 0 20 * * FRI)
+ * - 触发频率：每周三 11:55（北京时间）触发生成结果，12:00 正式揭晓/通知（Cron 需按 UTC 配置，参考 docs/SUPABASE_SETUP.md）
  *
  * 算法实现：
  * 1. 收集本周所有参与者及其问卷数据
