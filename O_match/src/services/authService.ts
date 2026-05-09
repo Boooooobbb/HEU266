@@ -553,6 +553,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
       const user = mapAuthUser(data.user);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      useAuthStore.getState().confirmAuthenticated();
       useAuthStore.getState().setUser(user);
       currentUserCache = { user, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
       return user;
@@ -578,6 +579,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
     }
 
     const user = JSON.parse(userStr) as User;
+    useAuthStore.getState().confirmAuthenticated();
     currentUserCache = { user, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
     return user;
   })().finally(() => {

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 
 const HomePage: React.FC = () => {
-  const isLoggedIn = useAuthStore((state) => Boolean(state.token && state.user));
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
 
   return (
     <>

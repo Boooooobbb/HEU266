@@ -173,39 +173,45 @@ function generateMatchReport(
 /**
  * 批量获取所有候选人的历史匹配记录
  * 返回一个 Set，包含所有已经匹配过的 (user_a_id, user_b_id) 对
+ * 分批查询避免单次 IN/OR 条件 URL 过长
  */
 async function getHistoricalMatchSet(
   client: any,
   userIds: string[]
 ): Promise<Set<string>> {
   const pairs = new Set<string>();
+  const BATCH_SIZE = 100;
   const PAGE_SIZE = 1000;
-  let page = 0;
 
-  while (true) {
-    const { data, error } = await client
-      .from("matches")
-      .select("user_a_id, user_b_id")
-      .or(
-        userIds.map((id) => `user_a_id.eq.${id},user_b_id.eq.${id}`).join(",")
-      )
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
-      .order("created_at");
+  for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
+    const batch = userIds.slice(i, i + BATCH_SIZE);
 
-    if (error) {
-      console.error("Failed to fetch historical matches:", error);
-      break;
+    let page = 0;
+    while (true) {
+      const { data, error } = await client
+        .from("matches")
+        .select("user_a_id, user_b_id")
+        .or(
+          batch.map((id) => `user_a_id.eq.${id},user_b_id.eq.${id}`).join(",")
+        )
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+        .order("created_at");
+
+      if (error) {
+        console.error("Failed to fetch historical matches:", error);
+        break;
+      }
+      if (!data || data.length === 0) break;
+
+      for (const m of data as any[]) {
+        const key =
+          m.user_a_id < m.user_b_id
+            ? `${m.user_a_id}-${m.user_b_id}`
+            : `${m.user_b_id}-${m.user_a_id}`;
+        pairs.add(key);
+      }
+      page++;
     }
-    if (!data || data.length === 0) break;
-
-    for (const m of data as any[]) {
-      const key =
-        m.user_a_id < m.user_b_id
-          ? `${m.user_a_id}-${m.user_b_id}`
-          : `${m.user_b_id}-${m.user_a_id}`;
-      pairs.add(key);
-    }
-    page++;
   }
 
   return pairs;
@@ -234,40 +240,54 @@ async function runMatching(client: any, weekTag: string) {
     const userIds = poolUsers.map((p: { user_id: string }) => p.user_id);
     console.log(`Pool size: ${userIds.length}`);
 
-    // 2. 获取用户资料
-    console.log("2. 获取用户资料...");
-    const { data: profiles, error: profileError } = await client
-      .from("profiles")
-      .select("*")
-      .in("id", userIds)
-      .limit(50000);
+    // 将用户 ID 分批，避免单次 IN 查询 URL 过长
+    const BATCH_SIZE = 100;
+    const idBatches: string[][] = [];
+    for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
+      idBatches.push(userIds.slice(i, i + BATCH_SIZE));
+    }
 
-    if (profileError) throw profileError;
-    if (!profiles || profiles.length < 2) {
+    // 2. 分批获取用户资料
+    console.log(`2. 获取用户资料 (${idBatches.length} 批)...`);
+    const profiles: any[] = [];
+    for (const batch of idBatches) {
+      const { data: batchProfiles, error: profileError } = await client
+        .from("profiles")
+        .select("*")
+        .in("id", batch);
+
+      if (profileError) throw profileError;
+      if (batchProfiles) profiles.push(...batchProfiles);
+    }
+
+    if (profiles.length < 2) {
       console.log("Not enough users for matching");
       return { success: true, matchesCreated: 0 };
     }
 
-    // 3. 获取问卷答案（分页拉取，避免默认 1000 行截断）
-    console.log("3. 获取问卷答案...");
+    // 3. 分批获取问卷答案（含分页，避免默认 1000 行截断）
+    console.log(`3. 获取问卷答案 (${idBatches.length} 批)...`);
     const answerRecords: any[] = [];
-    const PAGE_SIZE = 1000;
-    let page = 0;
-    while (true) {
-      const { data: pageRecords, error: answerError } = await client
-        .from("questionnaire_answers")
-        .select("user_id, module_id, question_id, answer_value")
-        .in("user_id", userIds)
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
-        .order("user_id");
+    const QA_PAGE_SIZE = 1000;
 
-      if (answerError) throw answerError;
-      if (!pageRecords || pageRecords.length === 0) break;
+    for (const batch of idBatches) {
+      let page = 0;
+      while (true) {
+        const { data: pageRecords, error: answerError } = await client
+          .from("questionnaire_answers")
+          .select("user_id, module_id, question_id, answer_value")
+          .in("user_id", batch)
+          .range(page * QA_PAGE_SIZE, (page + 1) * QA_PAGE_SIZE - 1)
+          .order("user_id");
 
-      answerRecords.push(...pageRecords);
-      page++;
+        if (answerError) throw answerError;
+        if (!pageRecords || pageRecords.length === 0) break;
+
+        answerRecords.push(...pageRecords);
+        page++;
+      }
     }
-    console.log(`  Fetched ${answerRecords.length} answer records across ${page} page(s)`);
+    console.log(`  Fetched ${answerRecords.length} answer records`);
 
     // 4. 构建用户数据
     console.log("4. 构建用户数据...");
