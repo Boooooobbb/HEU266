@@ -607,7 +607,7 @@ const ChatRoomPage: React.FC = () => {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="mx-auto w-[92%] max-w-7xl space-y-6 pb-8">
+      <div className="mx-auto w-[92%] max-w-7xl space-y-6 pb-30 md:pb-28">
         <div className="flex justify-center">
           <div className="bg-white/50 backdrop-blur-md border border-white/40 px-6 py-2.5 rounded-full text-[10px] font-black text-on-surface-variant/40 tracking-[0.2em] shadow-sm uppercase">
             缘分始于 2 天前
