@@ -8,24 +8,19 @@
  *
  * 算法流程：
  * 1. 分组：按性别期望将用户分成不同池子
- * 2. 预计算：为每个用户计算所有候选的匹配分数
+ * 2. 预计算：为每个用户计算所有候选的匹配分数（轻量，只存数字）
  * 3. 构建偏好列表：按分数降序排列
  * 4. 延迟接受：迭代处理，直到收敛或达到最大轮次
+ *
+ * scoreMatrix 类型: Map<userId, Map<otherId, number>>（只存总分，节省内存）
  */
 
 import {
   CandidateUser,
   MatchResult,
-  MatchScore,
   MAX_MATCHES_PER_USER,
   MIN_SCORE_THRESHOLD,
 } from "./types.ts";
-
-interface CandidatePair {
-  userA: CandidateUser;
-  userB: CandidateUser;
-  score: MatchScore;
-}
 
 interface UserMatchState {
   userId: string;
@@ -35,11 +30,12 @@ interface UserMatchState {
 
 /**
  * Gale-Shapley 变体匹配算法
+ * scoreMatrix: Map<userId, Map<otherId, scoreTotal>>
  */
 export async function runGaleShapleyMatching(
   candidates: CandidateUser[],
   weekTag: string,
-  scoreMatrix: Map<string, Map<string, MatchScore>>,
+  scoreMatrix: Map<string, Map<string, number>>,
   getCurrentTime: () => string = () => new Date().toISOString()
 ): Promise<MatchResult[]> {
   console.log(`Starting Gale-Shapley matching with ${candidates.length} candidates`);
@@ -60,22 +56,20 @@ export async function runGaleShapleyMatching(
   }
 
   // 构建每个用户的偏好列表（按分数降序）
-  const preferences = new Map<string, { userId: string; score: MatchScore }[]>();
+  const preferences = new Map<string, { userId: string; score: number }[]>();
   for (const candidate of candidates) {
-    const userPrefs: { userId: string; score: MatchScore }[] = [];
+    const userPrefs: { userId: string; score: number }[] = [];
 
     for (const other of candidates) {
       if (candidate.id === other.id) continue;
 
-      // 获取预计算的分数
       const score = scoreMatrix.get(candidate.id)?.get(other.id);
-      if (score && score.total >= MIN_SCORE_THRESHOLD) {
+      if (score !== undefined && score >= MIN_SCORE_THRESHOLD) {
         userPrefs.push({ userId: other.id, score });
       }
     }
 
-    // 按分数降序排序
-    userPrefs.sort((a, b) => b.score.total - a.score.total);
+    userPrefs.sort((a, b) => b.score - a.score);
     preferences.set(candidate.id, userPrefs);
   }
 
@@ -94,37 +88,30 @@ export async function runGaleShapleyMatching(
       const state = matchStates.get(candidate.id)!;
       const prefs = preferences.get(candidate.id) || [];
 
-      // 找到第一个还没有被拒绝且未匹配的候选
       for (const pref of prefs) {
         if (state.rejectedUsers.has(pref.userId)) continue;
         if (state.matchedUsers.has(pref.userId)) continue;
 
-        // 尝试向这个候选发送配对邀请
         const targetState = matchStates.get(pref.userId)!;
 
         if (targetState.matchedUsers.size < MAX_MATCHES_PER_USER) {
-          // 候选还有空位，直接接受
           state.matchedUsers.add(pref.userId);
           targetState.matchedUsers.add(candidate.id);
           changed = true;
           break;
         } else {
-          // 候选已满，需要比较分数
-          // 找到当前最低分的匹配
           let lowestScore = Infinity;
           let lowestMatchedUserId: string | null = null;
 
           for (const matchedId of targetState.matchedUsers) {
-            const score = scoreMatrix.get(pref.userId)?.get(matchedId);
-            if (score && score.total < lowestScore) {
-              lowestScore = score.total;
+            const s = scoreMatrix.get(pref.userId)?.get(matchedId);
+            if (s !== undefined && s < lowestScore) {
+              lowestScore = s;
               lowestMatchedUserId = matchedId;
             }
           }
 
-          // 如果新候选分数更高，替换最低分匹配
-          if (lowestMatchedUserId && pref.score.total > lowestScore) {
-            // 拒绝最低分的匹配
+          if (lowestMatchedUserId && pref.score > lowestScore) {
             state.matchedUsers.add(pref.userId);
             targetState.matchedUsers.delete(lowestMatchedUserId);
             matchStates.get(lowestMatchedUserId)!.rejectedUsers.add(pref.userId);
@@ -132,7 +119,6 @@ export async function runGaleShapleyMatching(
             changed = true;
             break;
           } else {
-            // 被拒绝
             state.rejectedUsers.add(pref.userId);
           }
         }
@@ -144,7 +130,7 @@ export async function runGaleShapleyMatching(
 
   console.log(`Gale-Shapley converged after ${iteration} iterations`);
 
-  // 生成匹配结果
+  // 生成匹配结果（不包含 MatchScore，只存总分，调用方后续补全维度）
   const results: MatchResult[] = [];
   const processedPairs = new Set<string>();
   const expiresAt = new Date();
@@ -154,21 +140,20 @@ export async function runGaleShapleyMatching(
 
   for (const [userId, state] of matchStates.entries()) {
     for (const matchedId of state.matchedUsers) {
-      // 确保每个配对只出现一次（按字典序）
       const pairKey = userId < matchedId ? `${userId}-${matchedId}` : `${matchedId}-${userId}`;
       if (processedPairs.has(pairKey)) continue;
       processedPairs.add(pairKey);
 
-      const score = scoreMatrix.get(userId)?.get(matchedId) ||
-                    scoreMatrix.get(matchedId)?.get(userId);
+      const scoreTotal = scoreMatrix.get(userId)?.get(matchedId) ??
+                         scoreMatrix.get(matchedId)?.get(userId);
 
-      if (!score) continue;
+      if (scoreTotal === undefined) continue;
 
       results.push({
         id: crypto.randomUUID(),
         userAId: userId < matchedId ? userId : matchedId,
         userBId: userId < matchedId ? matchedId : userId,
-        score,
+        score: { total: scoreTotal, dimensions: { valueAlignment: 0, lifestyleFit: 0, personalityMatch: 0, interestOverlap: 0, expectationMatch: 0 } },
         weekTag,
         status: "pending",
         expiresAt: expiresAtStr,
@@ -178,7 +163,6 @@ export async function runGaleShapleyMatching(
   }
 
   console.log(`Generated ${results.length} match results`);
-
   return results;
 }
 
@@ -225,20 +209,20 @@ export function groupUsersByPreference(
 }
 
 /**
- * 为特定分组的用户预计算匹配分数矩阵
+ * 为特定分组的用户预计算匹配分数矩阵（轻量：只存数字总分）
  */
 export function buildScoreMatrix(
   candidates: CandidateUser[],
-  calculateScore: (a: CandidateUser, b: CandidateUser) => MatchScore
-): Map<string, Map<string, MatchScore>> {
-  const matrix = new Map<string, Map<string, MatchScore>>();
+  calculateScore: (a: CandidateUser, b: CandidateUser) => number
+): Map<string, Map<string, number>> {
+  const matrix = new Map<string, Map<string, number>>();
 
   for (const a of candidates) {
-    const row = new Map<string, MatchScore>();
+    const row = new Map<string, number>();
     for (const b of candidates) {
       if (a.id === b.id) continue;
       const score = calculateScore(a, b);
-      if (score.total > 0) {
+      if (score > 0) {
         row.set(b.id, score);
       }
     }

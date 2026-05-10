@@ -8,7 +8,7 @@
  * 适用于 100-500 用户规模
  */
 
-import { CandidateUser, MatchScore } from "./types.ts";
+import { CandidateUser } from "./types.ts";
 
 interface MatchPair {
   leftId: string;
@@ -27,7 +27,7 @@ interface MatchPair {
 export function hungarianMatch(
   leftPool: CandidateUser[],
   rightPool: CandidateUser[],
-  scoreMatrix: Map<string, Map<string, MatchScore>>
+  scoreMatrix: Map<string, Map<string, number>>
 ): MatchPair[] {
   const n = Math.max(leftPool.length, rightPool.length);
   if (n === 0) return [];
@@ -55,8 +55,8 @@ export function hungarianMatch(
     weights[i] = [];
     for (let j = 0; j < effectiveRightPool.length; j++) {
       const score =
-        scoreMatrix.get(leftIds[i])?.get(rightIds[j])?.total ??
-        scoreMatrix.get(rightIds[j])?.get(leftIds[i])?.total ??
+        scoreMatrix.get(leftIds[i])?.get(rightIds[j]) ??
+        scoreMatrix.get(rightIds[j])?.get(leftIds[i]) ??
         0;
       weights[i][j] = score;
     }
@@ -77,8 +77,8 @@ export function hungarianMatch(
       const rightId = swapped ? rawLeftId : rawRightId;
 
       const normalizedScore =
-        scoreMatrix.get(leftId)?.get(rightId)?.total ??
-        scoreMatrix.get(rightId)?.get(leftId)?.total ??
+        scoreMatrix.get(leftId)?.get(rightId) ??
+        scoreMatrix.get(rightId)?.get(leftId) ??
         score;
 
       pairs.push({ leftId, rightId, score: normalizedScore });
@@ -183,7 +183,7 @@ function kmMatch(weights: number[][], n: number, m: number): [number, number][] 
 export function greedySupplement(
   leftPool: CandidateUser[],
   rightPool: CandidateUser[],
-  scoreMatrix: Map<string, Map<string, MatchScore>>,
+  scoreMatrix: Map<string, Map<string, number>>,
   existingMatches: Set<string>,
   maxMatchesPerUser: number = 1,
   minScoreThreshold: number = 55
@@ -214,7 +214,7 @@ export function greedySupplement(
       .filter((r) => (matchCountByUser.get(r.id) ?? 0) === 0)
       .map((r) => ({
         id: r.id,
-        score: scoreMatrix.get(left.id)?.get(r.id)?.total ?? 0,
+        score: scoreMatrix.get(left.id)?.get(r.id) ?? 0,
       }))
       .filter((c) => c.score >= minScoreThreshold)
       .sort((a, b) => b.score - a.score);
@@ -242,7 +242,7 @@ export function greedySupplement(
 export function batchMatch(
   leftPool: CandidateUser[],
   rightPool: CandidateUser[],
-  scoreMatrix: Map<string, Map<string, MatchScore>>,
+  scoreMatrix: Map<string, Map<string, number>>,
   options: {
     useHungarianFirst?: boolean;
     maxMatchesPerUser?: number;

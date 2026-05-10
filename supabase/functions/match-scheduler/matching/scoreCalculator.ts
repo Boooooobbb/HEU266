@@ -591,6 +591,86 @@ export function calculateMatchScore(
 }
 
 /**
+ * 轻量评分：只返回总分（0-100），不构建 MatchScore 对象
+ * 用于大规模匹配矩阵构建，节省内存
+ * 与 calculateMatchScore 共享相同计算逻辑
+ */
+export function calculateScoreFast(
+  profileA: UserProfile,
+  profileB: UserProfile,
+  answersA: {
+    module1?: Module1Answers;
+    module2?: Module2Answers;
+    module3?: Module3Answers;
+    module4?: Module4Answers;
+    module5?: Module5Answers;
+  },
+  answersB: {
+    module1?: Module1Answers;
+    module2?: Module2Answers;
+    module3?: Module3Answers;
+    module4?: Module4Answers;
+    module5?: Module5Answers;
+  }
+): number {
+  const mod1A = answersA.module1 || {
+    gender: profileA.gender as "male" | "female",
+    expectedGender: profileA.expected_gender as "male" | "female" | "both",
+    stage: profileA.stage as any,
+    partnerStages: profileA.partner_stages,
+    locations: profileA.locations,
+  };
+  const mod1B = answersB.module1 || {
+    gender: profileB.gender as "male" | "female",
+    expectedGender: profileB.expected_gender as "male" | "female" | "both",
+    stage: profileB.stage as any,
+    partnerStages: profileB.partner_stages,
+    locations: profileB.locations,
+  };
+
+  if (!checkGenderConstraint(mod1A, mod1B)) return 0;
+  if (!checkStageConstraint(mod1A, mod1B)) return 0;
+
+  // Module 2: 避雷检查
+  if (answersA.module2 && answersB.module2) {
+    const result = calculateLifestyleFit(answersA.module2, answersB.module2);
+    if (result.isExcluded) return 0;
+    var lifestyleFit = result.score;
+  } else {
+    var lifestyleFit = 7.5;
+  }
+
+  // Module 4: 价值观
+  const valueAlignment = (answersA.module4 && answersB.module4)
+    ? calculateValueAlignment(answersA.module4, answersB.module4)
+    : 10;
+
+  // Module 3: 人格
+  const personalityMatch = (answersA.module3 && answersB.module3)
+    ? calculatePersonalityMatch(answersA.module3, answersB.module3)
+    : 12.5;
+
+  // Module 5: 兴趣 + 期望
+  const interestOverlap = (answersA.module5 || answersB.module5)
+    ? calculateInterestOverlap([], [], answersA.module5, answersB.module5)
+    : 10;
+
+  const expectationMatch = (answersA.module5 && answersB.module5)
+    ? calculateExpectationMatch(answersA.module5, answersB.module5)
+    : 10;
+
+  // 加权求和 → 0-100 百分制
+  const total =
+    (valueAlignment / 20) * 100 * WEIGHTS.valueAlignment +
+    (lifestyleFit / 15) * 100 * WEIGHTS.lifestyleFit +
+    (personalityMatch / 25) * 100 * WEIGHTS.personalityMatch +
+    (interestOverlap / 20) * 100 * WEIGHTS.interestOverlap +
+    (expectationMatch / 20) * 100 * WEIGHTS.expectationMatch;
+
+  return Math.round(total * 100) / 100;
+}
+
+/**
  * 快速检查两个用户是否可能匹配
  * 用于预筛选，避免不必要的计算
  */

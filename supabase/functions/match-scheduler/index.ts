@@ -31,6 +31,7 @@ import {
   WEIGHTS,
   MIN_SCORE_THRESHOLD,
   calculateMatchScore,
+  calculateScoreFast,
   canPossiblyMatch,
   runGaleShapleyMatching,
   groupUsersByPreference,
@@ -90,10 +91,11 @@ function buildQuestionnaireFromRecords(
 }
 
 /**
- * 为主匹配函数计算两个候选人的分数
+ * 轻量评分：只返回总分数字，用于构建分数矩阵
+ * 完整 MatchScore 在匹配成功后按需生成
  */
-function calculatePairScore(a: CandidateUser, b: CandidateUser): MatchScore {
-  return calculateMatchScore(
+function calculatePairScoreFast(a: CandidateUser, b: CandidateUser): number {
+  return calculateScoreFast(
     a.profile,
     b.profile,
     a.questionnaire,
@@ -346,18 +348,10 @@ async function runMatching(client: any, weekTag: string) {
       return { success: true, matchesCreated: 0 };
     }
 
-    // 5. 预计算所有候选对分数
+    // 5. 预计算所有候选对分数（轻量：只存数字总分）
     console.log("5. 预计算匹配分数...");
-    const scoreMatrix = buildScoreMatrix(candidates, calculatePairScore);
-
-    // 调试：打印每个候选人的分数
-    for (const [idA, row] of scoreMatrix.entries()) {
-      for (const [idB, score] of row.entries()) {
-        if (idA < idB) {
-          console.log(`  Score ${idA.substring(0,8)} <-> ${idB.substring(0,8)}: total=${score.total}, valueAlign=${score.dimensions.valueAlignment}, lifestyle=${score.dimensions.lifestyleFit}, personality=${score.dimensions.personalityMatch}, interest=${score.dimensions.interestOverlap}, expectation=${score.dimensions.expectationMatch}`);
-        }
-      }
-    }
+    const scoreMatrix = buildScoreMatrix(candidates, calculatePairScoreFast);
+    console.log(`  Score matrix: ${scoreMatrix.size} rows`);
 
     // 6. 批量获取历史匹配记录（避免 O(n²) DB 查询）
     console.log("6. 获取历史匹配记录...");
@@ -459,17 +453,17 @@ async function runMatching(client: any, weekTag: string) {
         if (processedPairs.has(pairKey)) continue;
         processedPairs.add(pairKey);
 
-        const score =
-          scoreMatrix.get(pair.leftId)?.get(pair.rightId) ||
+        const scoreTotal =
+          scoreMatrix.get(pair.leftId)?.get(pair.rightId) ??
           scoreMatrix.get(pair.rightId)?.get(pair.leftId);
 
-        if (!score || score.total < MIN_SCORE_THRESHOLD) continue;
+        if (!scoreTotal || scoreTotal < MIN_SCORE_THRESHOLD) continue;
 
         matchResults.push({
           id: crypto.randomUUID(),
           userAId: pair.leftId,
           userBId: pair.rightId,
-          score,
+          score: { total: scoreTotal, dimensions: { valueAlignment: 0, lifestyleFit: 0, personalityMatch: 0, interestOverlap: 0, expectationMatch: 0 } },
           weekTag,
           status: "pending",
           expiresAt: expiresAtStr,
@@ -511,6 +505,14 @@ async function runMatching(client: any, weekTag: string) {
       const candidateB = candidates.find((c) => c.id === match.userBId);
 
       if (profileA && profileB && candidateA && candidateB) {
+        // 按需计算完整 MatchScore（含维度明细），用于报告生成
+        match.score = calculateMatchScore(
+          profileA,
+          profileB,
+          candidateA.questionnaire,
+          candidateB.questionnaire
+        );
+
         const report = generateMatchReport(
           match,
           profileA,

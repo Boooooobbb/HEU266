@@ -11,7 +11,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ className, hideNav = false }) => {
   return (
-    <div className={cn('min-h-screen bg-surface', className)}>
+    <div className={cn('min-h-screen bg-surface overflow-x-hidden', className)}>
       <Header />
       <main className="relative z-10">
         <Outlet />
