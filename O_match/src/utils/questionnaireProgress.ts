@@ -10,6 +10,29 @@ export interface ModuleProgress {
 
 export const QUESTIONNAIRE_TOTAL_QUESTIONS = 33;
 
+export const MODULE_MAX_PROGRESS = {
+  module1: 5,
+  module2: 5,
+  module3: 10,
+  module4: 6,
+  module5: 7,
+} as const;
+
+export const resolveQuestionnaireModulePath = (
+  data: QuestionnaireAnswer | null | undefined
+): string => {
+  if (!data) return '/questionnaire/1';
+
+  const progress = calculateModuleProgress(data);
+  if (progress.module1 < MODULE_MAX_PROGRESS.module1) return '/questionnaire/1';
+  if (progress.module2 < MODULE_MAX_PROGRESS.module2) return '/questionnaire/2';
+  if (progress.module3 < MODULE_MAX_PROGRESS.module3) return '/questionnaire/3';
+  if (progress.module4 < MODULE_MAX_PROGRESS.module4) return '/questionnaire/4';
+  if (progress.module5 < MODULE_MAX_PROGRESS.module5) return '/questionnaire/5';
+
+  return '/waiting';
+};
+
 export const calculateModule1Progress = (
   module1: QuestionnaireAnswer['module1'] | null | undefined
 ): number => {

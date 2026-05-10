@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
+import { getQuestionnaireSnapshot } from '@/services/questionnaireService';
+import { resolveQuestionnaireModulePath } from '@/utils/questionnaireProgress';
 
 const HomePage: React.FC = () => {
   const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
@@ -147,7 +149,7 @@ const HomePage: React.FC = () => {
         {/* CTA Button */}
         <div className="fixed bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm flex justify-center pointer-events-none">
           <Link
-            to={isLoggedIn ? '/questionnaire/1' : '/login'}
+            to={isLoggedIn ? resolveQuestionnaireModulePath(getQuestionnaireSnapshot()) : '/login'}
             className="pointer-events-auto orange-glow text-white w-full py-5 rounded-full flex items-center justify-center gap-3 font-extrabold text-lg md:text-xl deep-glow-shadow transition-all duration-300 hover:scale-105 active:scale-95 group hover:-translate-y-1"
           >
             <span className="material-symbols-outlined text-2xl md:text-3xl group-hover:scale-110 transition-transform" style={{ fontVariationSettings: '"FILL" 1' }}>

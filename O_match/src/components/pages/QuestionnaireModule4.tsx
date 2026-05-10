@@ -62,6 +62,18 @@ const QuestionnaireModule4: React.FC = () => {
     setModuleProgress(4, currentModuleProgress);
   }, [currentModuleProgress, isHydrated, setModuleProgress]);
 
+  // 首次加载时自动滚动到第一个未完成的题目
+  const hasScrolledRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isHydrated || hasScrolledRef.current) return;
+    hasScrolledRef.current = true;
+    const questions = Array.from({ length: 6 }, (_, i) => ({
+      id: `q${i + 1}`,
+      completed: formData[`q${i + 1}` as keyof FormData] !== '',
+    }));
+    requestAnimationFrame(() => focusFirstIncomplete(questions));
+  }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 计算总进度（33题）
   const totalProgress = calculateTotalProgress(moduleProgress);
 

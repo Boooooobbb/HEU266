@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '@/services/authService';
-import { getQuestionnaireSnapshot, hasSubmittedQuestionnaire, loadQuestionnaire } from '@/services/questionnaireService';
-import { calculateModuleProgress } from '@/utils/questionnaireProgress';
+import { getQuestionnaireSnapshot, loadQuestionnaire } from '@/services/questionnaireService';
+import { resolveQuestionnaireModulePath } from '@/utils/questionnaireProgress';
 
 const HRBEU_EMAIL_SUFFIX = '@hrbeu.edu.cn';
 const HRBEU_EMAIL_MESSAGE = '仅支持 HEU 校园邮箱';
@@ -26,22 +26,7 @@ const LoginPage: React.FC = () => {
     return prefix ? `${prefix}${HRBEU_EMAIL_SUFFIX}` : '';
   };
 
-  const resolvePostLoginPath = () => {
-    const questionnaire = getQuestionnaireSnapshot();
-
-    if (hasSubmittedQuestionnaire()) {
-      return '/waiting';
-    }
-
-    const progress = calculateModuleProgress(questionnaire);
-    if (progress.module1 < 5) return '/questionnaire/1';
-    if (progress.module2 < 5) return '/questionnaire/2';
-    if (progress.module3 < 10) return '/questionnaire/3';
-    if (progress.module4 < 6) return '/questionnaire/4';
-    if (progress.module5 < 7) return '/questionnaire/5';
-
-    return '/waiting';
-  };
+  const resolvePostLoginPath = () => resolveQuestionnaireModulePath(getQuestionnaireSnapshot());
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
