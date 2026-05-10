@@ -5,7 +5,7 @@ import { useQuestionnaireStore } from '@/store';
 import { useQuestionnaireAutoSave } from '@/hooks/useQuestionnaireAutoSave';
 import { useIncompleteQuestionPrompt } from '@/hooks/useIncompleteQuestionPrompt';
 import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopProgress';
-import { calculateModule3Progress, calculateTotalProgress } from '@/utils/questionnaireProgress';
+import { calculateModule3Progress, calculateTotalProgress, MODULE_MAX_PROGRESS } from '@/utils/questionnaireProgress';
 
 const modules = [
   { id: 1, name: '基础画像', icon: 'person', path: '/questionnaire/1' },
@@ -135,6 +135,7 @@ const QuestionnaireModule3: React.FC = () => {
   };
 
   const handleModuleNavigate = (nextModuleId: number) => {
+    // 向前跳转：检查当前模块是否完成
     if (nextModuleId > currentModule) {
       const questions = [
         { id: 'q1', completed: formData.q1Preference !== '' },
@@ -150,6 +151,16 @@ const QuestionnaireModule3: React.FC = () => {
       ];
 
       if (focusFirstIncomplete(questions)) {
+        return;
+      }
+    }
+
+    // 检查目标模块之前的所有模块是否都已完成
+    for (let m = 1; m < nextModuleId; m++) {
+      if (m === currentModule) continue;
+      const key = `module${m}` as keyof typeof MODULE_MAX_PROGRESS;
+      if (moduleProgress[key] < MODULE_MAX_PROGRESS[key]) {
+        navigate(`/questionnaire/${m}`);
         return;
       }
     }

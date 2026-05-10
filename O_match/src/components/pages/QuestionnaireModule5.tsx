@@ -6,7 +6,7 @@ import { joinMatching } from '@/services/matchingService';
 import { useQuestionnaireAutoSave } from '@/hooks/useQuestionnaireAutoSave';
 import { useIncompleteQuestionPrompt } from '@/hooks/useIncompleteQuestionPrompt';
 import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopProgress';
-import { calculateModule5Progress, calculateTotalProgress } from '@/utils/questionnaireProgress';
+import { calculateModule5Progress, calculateTotalProgress, MODULE_MAX_PROGRESS } from '@/utils/questionnaireProgress';
 
 const modules = [
   { id: 1, name: '基础画像', icon: 'person', path: '/questionnaire/1' },
@@ -237,6 +237,19 @@ const QuestionnaireModule5: React.FC = () => {
     },
   ];
 
+  const handleModuleNavigate = (nextModuleId: number) => {
+    // 检查目标模块之前的所有模块是否都已完成
+    for (let m = 1; m < nextModuleId; m++) {
+      const key = `module${m}` as keyof typeof MODULE_MAX_PROGRESS;
+      if (moduleProgress[key] < MODULE_MAX_PROGRESS[key]) {
+        navigate(`/questionnaire/${m}`);
+        return;
+      }
+    }
+
+    navigate(`/questionnaire/${nextModuleId}`);
+  };
+
   const handleCompleteAndMatch = async () => {
     // 找到第一个未完成的题目
     const requiredQuestions = [
@@ -272,7 +285,7 @@ const QuestionnaireModule5: React.FC = () => {
         totalProgress={totalProgress}
         saveState={saveState}
         lastSavedAt={lastSavedAt}
-        onNavigate={(nextModuleId) => navigate(`/questionnaire/${nextModuleId}`)}
+        onNavigate={handleModuleNavigate}
       />
 
       {/* Survey Content Area */}
