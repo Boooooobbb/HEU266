@@ -642,7 +642,7 @@ const ChatRoomPage: React.FC = () => {
               </div>
             </div>
           ))}
-          <div ref={messagesEndRef} style={{ scrollMarginBottom: '200px' }} />
+          <div ref={messagesEndRef} style={{ scrollMarginBottom: '280px' }} />
         </div>
 
         {error && <div className="text-red-500 text-sm text-center">{error}</div>}
