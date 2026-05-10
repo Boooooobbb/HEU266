@@ -148,6 +148,38 @@ const ChatRoomPage: React.FC = () => {
     };
   }, [preloadedContext, preloadedData]);
 
+  // 轮询回退：当 Supabase Realtime 不可用时，定期拉取新消息确保消息不丢失
+  useEffect(() => {
+    if (!chatContext) return;
+
+    const POLL_INTERVAL_MS = 5_000;
+
+    let mounted = true;
+
+    const pollNewMessages = async () => {
+      try {
+        const latestMessages = await loadMessages(chatContext.matchId);
+        if (!mounted) return;
+
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id));
+          const newMessages = latestMessages.filter((m) => !existingIds.has(m.id));
+          if (newMessages.length === 0) return prev;
+          return [...prev, ...newMessages];
+        });
+      } catch {
+        // 轮询静默失败，不影响用户体验
+      }
+    };
+
+    const intervalId = setInterval(pollNewMessages, POLL_INTERVAL_MS);
+
+    return () => {
+      mounted = false;
+      clearInterval(intervalId);
+    };
+  }, [chatContext]);
+
   useEffect(() => {
     if (loading || !messagesEndRef.current) {
       return;
