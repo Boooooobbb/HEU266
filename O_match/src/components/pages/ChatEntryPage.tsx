@@ -189,7 +189,7 @@ const ChatEntryPage: React.FC = () => {
 
   return (
     <main className="pt-24 pb-32 px-4 md:px-8 max-w-4xl mx-auto">
-      <div className="glass-card ghost-border rounded-[2rem] p-8 md:p-12 text-center shadow-[0_8px_32px_rgba(28,28,24,0.06)]">
+      <div className="glass-card rounded-[2rem] p-8 md:p-12 text-center shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)]">
         <div className="w-16 h-16 rounded-2xl mx-auto mb-5 bg-primary-container/50 flex items-center justify-center text-primary">
           <span className="material-symbols-outlined text-3xl">notifications</span>
         </div>

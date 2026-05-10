@@ -81,7 +81,7 @@ const ContactMethodsPage: React.FC = () => {
         <h1 className="font-headline text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface mb-2">联系方式管理</h1>
       </div>
 
-      <div className="glass-card ghost-border rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06)] space-y-5">
+      <div className="glass-card rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] space-y-5">
         {loading && <div className="text-on-surface-variant text-sm">加载中...</div>}
 
         {!loading && methods.map((item) => (

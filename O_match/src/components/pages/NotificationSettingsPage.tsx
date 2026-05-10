@@ -96,7 +96,7 @@ const NotificationSettingsPage: React.FC = () => {
   if (loading) {
     return (
       <main className="pt-32 pb-44 px-4 md:px-8 max-w-4xl mx-auto">
-        <div className="glass-card ghost-border rounded-[2.5rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] text-center text-on-surface-variant">
+        <div className="glass-card rounded-[2.5rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] text-center text-on-surface-variant">
           正在加载通知设置...
         </div>
       </main>
@@ -105,8 +105,7 @@ const NotificationSettingsPage: React.FC = () => {
 
   return (
     <main className="pt-32 pb-44 px-4 md:px-8 max-w-4xl mx-auto">
-      <div className="glass-card ghost-border rounded-[2.5rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary-container/20 blur-[80px] rounded-full" />
+      <div className="glass-card rounded-[2.5rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] relative overflow-hidden">
 
         <div className="relative">
           <h1 className="font-headline text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface mb-3">通知提醒</h1>

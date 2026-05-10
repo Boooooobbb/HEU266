@@ -13,8 +13,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, className, onCli
   return (
     <div
       className={cn(
-        'glass-card ghost-border rounded-[2rem] p-8 md:p-12',
-        'shadow-[0_8px_32px_rgba(28,28,24,0.06)]',
+        'glass-card rounded-[2rem] p-8 md:p-12',
+        'shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)]',
         'flex flex-col items-center text-center',
         onClick && 'cursor-pointer hover:scale-[1.02] transition-transform',
         className

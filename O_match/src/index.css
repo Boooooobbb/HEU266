@@ -37,7 +37,7 @@
   }
 
   .ghost-border {
-    outline: 1px solid rgba(219, 194, 178, 0.2);
+    box-shadow: 0 0 0 1px rgba(219, 194, 178, 0.2);
   }
 
   .warm-glow {

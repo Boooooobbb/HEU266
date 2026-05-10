@@ -51,7 +51,7 @@ const FeedbackPage: React.FC = () => {
         <p className="text-on-surface-variant font-medium">告诉我们你遇到的问题或想法，我们会持续改进意配</p>
       </div>
 
-      <div className="glass-card ghost-border rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06)]">
+      <div className="glass-card rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)]">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant ml-2">反馈类型</label>

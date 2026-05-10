@@ -73,7 +73,7 @@ const SecurityPage: React.FC = () => {
       {/* Settings Sections */}
       <div className="space-y-6">
         {/* Account Security Section */}
-        <div className="glass-card ghost-border rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06)]">
+        <div className="glass-card rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)]">
           <h2 className="font-headline text-xl font-bold text-on-surface px-2 mb-6 flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">security</span>
             账号安全
@@ -121,7 +121,7 @@ const SecurityPage: React.FC = () => {
         </div>
 
         {/* Danger Zone Section */}
-        <div className="glass-card ghost-border rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06)] border border-error/20">
+        <div className="glass-card rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] border border-error/20">
           <h2 className="font-headline text-xl font-bold text-error px-2 mb-6 flex items-center gap-2">
             <span className="material-symbols-outlined text-error">warning</span>
             危险操作

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const PrivacyPolicyPage: React.FC = () => {
   return (
     <main className="pt-24 pb-24 px-4 md:px-8 max-w-4xl mx-auto">
-      <section className="glass-card ghost-border rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)]">
+      <section className="glass-card rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)]">
         <h1 className="font-headline text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface mb-3">隐私政策</h1>
         <p className="text-on-surface-variant text-sm mb-8">更新日期：2026-04-14</p>
 

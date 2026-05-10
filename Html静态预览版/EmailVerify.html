@@ -89,7 +89,7 @@
         -webkit-backdrop-filter: blur(24px);
       }
       .ghost-border {
-        outline: 1px solid rgba(219, 194, 178, 0.2);
+        box-shadow: 0 0 0 1px rgba(219, 194, 178, 0.2);
       }
       .sunset-gradient {
         background: linear-gradient(135deg, #944a00 0%, #f68a2f 100%);
@@ -117,7 +117,7 @@
 <!-- Auth Canvas -->
 <main class="w-full max-w-lg flex-1 flex flex-col justify-center">
 <!-- Central Floating Card -->
-<div class="glass-card ghost-border rounded-[2rem] p-10 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex flex-col items-center text-center">
+<div class="glass-card rounded-[2rem] p-10 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] flex flex-col items-center text-center">
 <!-- Icon/Shield Visual -->
 <div class="w-20 h-20 sunset-gradient rounded-full flex items-center justify-center mb-8 shadow-lg shadow-orange-500/20">
 <span class="material-symbols-outlined text-white text-4xl" data-icon="verified_user">verified_user</span>
