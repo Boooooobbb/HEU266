@@ -575,7 +575,7 @@ const ChatRoomPage: React.FC = () => {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="mx-auto w-[92%] max-w-7xl space-y-6 pb-56 md:pb-64">
+      <div className="mx-auto w-[92%] max-w-7xl space-y-6 pb-8">
         <div className="flex justify-center">
           <div className="bg-white/50 backdrop-blur-md border border-white/40 px-6 py-2.5 rounded-full text-[10px] font-black text-on-surface-variant/40 tracking-[0.2em] shadow-sm uppercase">
             缘分始于 2 天前
@@ -610,10 +610,8 @@ const ChatRoomPage: React.FC = () => {
               </div>
             </div>
           ))}
-          <div ref={messagesEndRef} style={{ scrollMarginBottom: '240px' }} />
+          <div ref={messagesEndRef} style={{ scrollMarginBottom: '200px' }} />
         </div>
-
-        <div className="h-40 md:h-52" aria-hidden="true" />
 
         {error && <div className="text-red-500 text-sm text-center">{error}</div>}
         {hint && <div className="text-green-600 text-sm text-center">{hint}</div>}
