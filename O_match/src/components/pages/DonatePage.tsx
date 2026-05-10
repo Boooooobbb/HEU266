@@ -15,7 +15,7 @@ const DonatePage: React.FC = () => {
       {/* Donation Info */}
       <div className="glass-card rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] mb-8">
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#07C160] to-[#09D35F] flex items-center justify-center shadow-lg shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E53935] to-[#EF5350] flex items-center justify-center shadow-lg shrink-0">
             <span className="material-symbols-outlined text-white text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
           </div>
           <div>
