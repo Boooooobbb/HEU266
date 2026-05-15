@@ -5,7 +5,7 @@
  * 1. 价值观契合度 (Module 4)
  * 2. 生活习惯匹配度 (Module 2) - 含避雷机制
  * 3. 人格互补/相似度 (Module 3)
- * 4. 兴趣重叠度 (Module 1 locations + Module 5 多选)
+ * 4. 关系期待匹配度 (Module 5 Q2 爱的语言 + Q7 核心感受)
  * 5. 期望匹配度 (Module 5)
  */
 

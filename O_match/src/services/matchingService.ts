@@ -383,8 +383,8 @@ function getDimensionIcon(name: string): string {
   if (name.includes('价值观')) return 'psychology';
   if (name.includes('习惯') || name.includes('生活')) return 'routine';
   if (name.includes('性格')) return 'mood';
-  if (name.includes('兴趣')) return 'interests';
-  if (name.includes('期望')) return 'favorite';
+  if (name.includes('关系') || name.includes('期待')) return 'favorite';
+  if (name.includes('期望')) return 'verified';
   return 'stars';
 }
 
@@ -398,11 +398,11 @@ function getDimensionDescription(name: string, score: number): string {
   if (name.includes('性格')) {
     return `性格互补度 ${score}%，你们在人格特质上形成了良好的互补或相似关系。`;
   }
-  if (name.includes('兴趣')) {
-    return `兴趣重叠度 ${score}%，共同的爱好和话题是关系最好的催化剂。`;
+  if (name.includes('关系') || name.includes('期待')) {
+    return `关系期待匹配度 ${score}%，你们在爱的语言和情感需求上高度合拍。`;
   }
   if (name.includes('期望')) {
-    return `期望匹配度 ${score}%，你们对亲密关系的期待高度一致，这是长久关系的基础。`;
+    return `期望匹配度 ${score}%，你们对亲密关系的未来规划一致，这是长久关系的基础。`;
   }
   return `该维度得分 ${score}%，是你们关系中的重要加分项。`;
 }

@@ -154,7 +154,7 @@ function generateMatchReport(
       expectationMatch: dimensions.expectationMatch,
     },
     radarData: {
-      label: ["价值观", "生活习惯", "性格互补", "兴趣重叠", "期望匹配"],
+      label: ["价值观", "生活习惯", "性格互补", "关系期待", "期望匹配"],
       score: [
         dimensions.valueAlignment,
         dimensions.lifestyleFit,
@@ -543,7 +543,7 @@ async function runMatching(client: any, weekTag: string) {
                   weight: WEIGHTS.personalityMatch,
                 },
                 {
-                  name: "兴趣重叠度",
+                  name: "关系期待匹配度",
                   score: report.compatibility.interestOverlap,
                   weight: WEIGHTS.interestOverlap,
                 },

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMatchStore } from '@/store';
 
-const RADAR_DIMENSION_LABELS = ['价值观', '生活习惯', '性格互补', '兴趣重叠', '期望匹配'];
+const RADAR_DIMENSION_LABELS = ['价值观', '生活习惯', '性格互补', '关系期待', '期望匹配'];
 
 // 正态分布参数（基于 1000 人测试数据）
 const DIST_MEAN = 54.4;
@@ -223,7 +223,7 @@ const MatchReportPage: React.FC = () => {
       -Math.PI / 2,                    // 顶部：价值观
       -Math.PI / 2 + (2 * Math.PI) / 5, // 右上方：生活习惯
       -Math.PI / 2 + (4 * Math.PI) / 5, // 右下方：性格互补
-      -Math.PI / 2 - (4 * Math.PI) / 5, // 左下方：兴趣重叠
+      -Math.PI / 2 - (4 * Math.PI) / 5, // 左下方：关系期待
       -Math.PI / 2 - (2 * Math.PI) / 5, // 左上方：期望匹配
     ];
 
