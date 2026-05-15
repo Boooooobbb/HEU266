@@ -132,3 +132,38 @@ export interface SendMessageRequest {
   matchId: string;
   content: string;
 }
+
+// 匹配报告相关类型
+export interface MatchReportDimension {
+  name: string;
+  score: number;
+  weight: number;
+}
+
+export interface ResonancePoint {
+  icon: string;
+  title: string;
+  description: string;
+  color: 'primary' | 'secondary' | 'tertiary';
+}
+
+export interface MatchReportData {
+  matchId: string;
+  compatibilityScore: number;
+  rankPercent: number;
+  dimensions: MatchReportDimension[];
+  summary: string;
+  highlightTopics: string[];
+  resonancePoints: ResonancePoint[];
+  iceBreakingTask: {
+    title: string;
+    description: string;
+    location: string;
+  };
+  partnerInfo: {
+    id: string;
+    nickname: string;
+    avatar?: string;
+  };
+  timeRemaining: string;
+}
