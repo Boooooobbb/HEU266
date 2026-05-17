@@ -322,8 +322,10 @@ VALUES
      {"value": "master", "label": "硕士"},
      {"value": "doctor", "label": "博士"},
      {"value": "both", "label": "都可以"}]', 4, TRUE),
+  ('q1_6', 'module_1', '你的兴趣爱好是什么？（可多选，最多12项）', 'multiple',
+   '[{"value":"跳舞","emoji":"💃"},{"value":"篮球","emoji":"🏀"},{"value":"足球","emoji":"⚽"},{"value":"羽毛球","emoji":"🏸"},{"value":"乒乓球","emoji":"🏓"},{"value":"跑步","emoji":"🏃"},{"value":"健身","emoji":"💪"},{"value":"游泳","emoji":"🏊"},{"value":"瑜伽","emoji":"🧘"},{"value":"骑行","emoji":"🚴"},{"value":"滑雪","emoji":"🎿"},{"value":"滑冰","emoji":"⛸️"},{"value":"摄影","emoji":"📷"},{"value":"绘画","emoji":"🎨"},{"value":"音乐","emoji":"🎵"},{"value":"吉他","emoji":"🎸"},{"value":"钢琴","emoji":"🎹"},{"value":"小提琴","emoji":"🎻"},{"value":"阅读","emoji":"📚"},{"value":"写作","emoji":"✍️"},{"value":"电影","emoji":"🎬"},{"value":"动漫","emoji":"🎭"},{"value":"游戏","emoji":"🎮"},{"value":"编程","emoji":"💻"},{"value":"烹饪","emoji":"🍳"},{"value":"烘焙","emoji":"🧁"},{"value":"咖啡","emoji":"☕"},{"value":"旅行","emoji":"✈️"},{"value":"徒步","emoji":"🥾"},{"value":"露营","emoji":"🏕️"},{"value":"滑板","emoji":"🛹"},{"value":"桌游","emoji":"🎲"},{"value":"象棋","emoji":"♟️"},{"value":"剧本杀","emoji":"🔍"},{"value":"密室逃脱","emoji":"🗝️"},{"value":"手工","emoji":"✂️"},{"value":"养宠","emoji":"🐱"},{"value":"种花","emoji":"🌻"},{"value":"看展","emoji":"🏛️"},{"value":"话剧","emoji":"🎭"},{"value":"演唱会","emoji":"🎤"},{"value":"追星","emoji":"🌟"},{"value":"汉服","emoji":"👘"},{"value":"街舞","emoji":"🕺"},{"value":"说唱","emoji":"🎙️"},{"value":"架子鼓","emoji":"🥁"},{"value":"二次元","emoji":"🌸"},{"value":"书法","emoji":"🖌️"},{"value":"钓鱼","emoji":"🎣"},{"value":"攀岩","emoji":"🧗"},{"value":"蹦极","emoji":"🪂"},{"value":"电竞","emoji":"🎮"}]', 6, TRUE),
   ('q1_5', 'module_1', '你常在哪些地方散步/活动？', 'multiple',
-   '[{"value": "hangzhou_center", "label": "启航活动中心"}, 
+   '[{"value": "hangzhou_center", "label": "启航活动中心"},
      {"value": "library", "label": "图书馆"},
      {"value": "boat_building", "label": "船海楼"},
      {"value": "11_building", "label": "11号楼"},
@@ -389,44 +391,34 @@ INSERT INTO questionnaire_questions (id, module_id, title, type, options, sort_o
 VALUES
   ('q3_1', 'module_3', '1. 连续熬夜赶完了一个大作业，迎来一个空闲的周末，你更倾向于如何"回血"？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 1, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_2', 'module_3', '2. 刚结束一场必须参加的集体活动，回到宿舍后的你通常会？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 2, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_3', 'module_3', '3. 面对下个月底才截止的重磅期末 Project，你的真实执行状态是？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 3, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_4', 'module_3', '4. 你的日常生活通常呈现出怎样的状态？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 4, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_5', 'module_3', '5. 在学习/工作效率上，你的自我评价是？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 5, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_6', 'module_3', '6. 面对突发情况的应急反应，你通常是？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 6, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_7', 'module_3', '7. 在消费观念上，你属于？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 7, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_8', 'module_3', '8. 在人生规划的长度上，你通常思考的是？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 8, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_9', 'module_3', '9. 你对生活变化的适应度是？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 9, TRUE),
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
   ('q3_10', 'module_3', '10. 压力下的你和平时的你区别大吗？', 'single',
    '[{"value": "similar", "emoji": "🪞", "label": "波段相似"}, 
-     {"value": "complement", "emoji": "🧩", "label": "波段互补"},
-     {"value": "natural", "emoji": "⭕", "label": "顺其自然"}]', 10, TRUE)
+     {"value": "complement", "emoji": "🧩", "label": "波段互补"}]
 ON CONFLICT (id) DO NOTHING;
 
 -- ------ Module 4 题目 ------

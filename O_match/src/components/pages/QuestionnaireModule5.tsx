@@ -82,7 +82,7 @@ const QuestionnaireModule5: React.FC = () => {
     requestAnimationFrame(() => focusFirstIncomplete(questions));
   }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 计算总进度（33题）
+  // 计算总进度（34题）
   const totalProgress = calculateTotalProgress(moduleProgress);
 
   const updateFormData = (field: keyof FormData, value: string | string[]) => {

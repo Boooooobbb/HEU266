@@ -92,7 +92,7 @@ const QuestionnaireModule3: React.FC = () => {
     requestAnimationFrame(() => focusFirstIncomplete(questions));
   }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 计算总进度（33题）
+  // 计算总进度（34题）
   const totalProgress = calculateTotalProgress(moduleProgress);
 
   const updateFormData = (field: keyof FormData, value: number | string) => {
@@ -246,7 +246,7 @@ const QuestionnaireModule3: React.FC = () => {
     onChange: (v: string) => void,
     options: { value: string; emoji: string; label: string }[]
   ) => (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 gap-3">
       {options.map((opt) => (
         <div
           key={opt.value}
@@ -279,7 +279,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
     {
@@ -295,7 +294,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
     {
@@ -311,7 +309,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
     {
@@ -327,7 +324,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
     {
@@ -341,9 +337,8 @@ const QuestionnaireModule3: React.FC = () => {
       sliderKey: 'q5Slider' as keyof FormData,
       prefKey: 'q5Preference' as keyof FormData,
       prefOptions: [
-        { value: 'empathy', emoji: '🫂', label: '共情大师' },
-        { value: 'rational', emoji: '⚓', label: '理性锚点' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
+        { value: 'similar', emoji: '🪞', label: '波段相似' },
+        { value: 'complement', emoji: '🧩', label: '波段互补' },
       ],
     },
     {
@@ -357,9 +352,8 @@ const QuestionnaireModule3: React.FC = () => {
       sliderKey: 'q6Slider' as keyof FormData,
       prefKey: 'q6Preference' as keyof FormData,
       prefOptions: [
-        { value: 'empathy', emoji: '🫂', label: '共情型' },
-        { value: 'rational', emoji: '⚓', label: '理性型' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
+        { value: 'similar', emoji: '🪞', label: '波段相似' },
+        { value: 'complement', emoji: '🧩', label: '波段互补' },
       ],
     },
     {
@@ -375,7 +369,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
     {
@@ -391,7 +384,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
     {
@@ -407,7 +399,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
     {
@@ -423,7 +414,6 @@ const QuestionnaireModule3: React.FC = () => {
       prefOptions: [
         { value: 'similar', emoji: '🪞', label: '波段相似' },
         { value: 'complement', emoji: '🧩', label: '波段互补' },
-        { value: 'natural', emoji: '⭕', label: '顺其自然' },
       ],
     },
   ];

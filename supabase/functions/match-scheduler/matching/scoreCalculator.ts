@@ -251,11 +251,6 @@ export function calculateLifestyleFit(
 
 // ============ Module 3: 人格互补/相似 ============
 
-// 互补维度：这些维度上，互补更好
-const COMPLEMENT_DIMENSIONS = [1, 2, 3, 4, 5, 7, 8];
-// 相似维度：这些维度上，相似更好
-const SIMILAR_DIMENSIONS = [6, 9, 10];
-
 function getSliderValue(answers: Module3Answers, qNum: number): number {
   return answers[`q${qNum}Slider` as keyof Module3Answers] as number;
 }
@@ -270,11 +265,10 @@ function getPreference(
 /**
  * 计算人格互补/相似度 (0-25分)
  *
- * 匹配逻辑：
- * - similar + similar: diff越小越好
- * - complement + complement: 在互补维度上diff越大越好
- * - natural: 中等分数
- * - 一方similar一方complement: 较低分数
+ * 先看双方偏好，再算分：
+ * - similar + similar → 滑块差越小分越高
+ * - complement + complement → 滑块差越大分越高
+ * - similar + complement → 冲突，较低分
  */
 export function calculatePersonalityMatch(
   answersA: Module3Answers,
@@ -294,27 +288,16 @@ export function calculatePersonalityMatch(
     const sliderDiff = Math.abs(sliderA - sliderB); // 0-4
     const normalizedDiff = sliderDiff / SLIDER_MAX; // 0-1
 
-    const isComplementDim = COMPLEMENT_DIMENSIONS.includes(i);
-
     let dimScore = 0;
 
     if (prefA === "similar" && prefB === "similar") {
-      // 双方都想相似 → diff越小越好
+      // 都选相似 → 差越小分越高
       dimScore = (1 - normalizedDiff) * 2.5;
     } else if (prefA === "complement" && prefB === "complement") {
-      // 双方都想互补
-      if (isComplementDim) {
-        // 互补维度：diff越大越好
-        dimScore = normalizedDiff * 2.5;
-      } else {
-        // 非互补维度：按相似处理
-        dimScore = (1 - normalizedDiff) * 2.5;
-      }
-    } else if (prefA === "natural" || prefB === "natural") {
-      // 任一方无所谓 → 中等分数
-      dimScore = 1.5;
+      // 都选互补 → 差越大分越高
+      dimScore = normalizedDiff * 2.5;
     } else {
-      // 一方想相似，另一方想互补 → 冲突，较低分
+      // 一方相似一方互补 → 冲突
       dimScore = 0.8;
     }
 
@@ -346,7 +329,33 @@ export function calculateValueAlignment(
   return Math.round((matchCount / keys.length) * 20 * 100) / 100;
 }
 
-// ============ Module 5: 期望匹配度 + 兴趣重叠 ============
+// ============ Module 1 Q6: 兴趣匹配 ============
+
+/**
+ * 计算兴趣匹配度 (0-20分)
+ * 使用 Jaccard 相似系数比较两人的兴趣爱好集合
+ */
+export function calculateInterestMatch(
+  interestsA: string[],
+  interestsB: string[]
+): number {
+  if (!interestsA || !interestsB || (interestsA.length === 0 && interestsB.length === 0)) {
+    return 10; // 无数据时给中等分
+  }
+
+  const setA = new Set(interestsA);
+  const setB = new Set(interestsB);
+
+  const intersection = new Set([...setA].filter((x) => setB.has(x)));
+  const union = new Set([...setA, ...setB]);
+
+  if (union.size === 0) return 10;
+
+  const jaccard = intersection.size / union.size;
+  return Math.round(jaccard * 20 * 100) / 100;
+}
+
+// ============ Module 5: 期望匹配度 + 关系期待 ============
 
 // 依恋类型匹配表
 const ATTACHMENT_COMPATIBILITY: Record<string, Record<string, number>> = {
@@ -491,6 +500,7 @@ export function calculateMatchScore(
         personalityMatch: 0,
         interestOverlap: 0,
         expectationMatch: 0,
+        interestMatch: 0,
       },
     };
   }
@@ -504,6 +514,7 @@ export function calculateMatchScore(
         personalityMatch: 0,
         interestOverlap: 0,
         expectationMatch: 0,
+        interestMatch: 0,
       },
     };
   }
@@ -535,6 +546,7 @@ export function calculateMatchScore(
         personalityMatch: 0,
         interestOverlap: 0,
         expectationMatch: 0,
+        interestMatch: 0,
       },
     };
   }
@@ -563,12 +575,21 @@ export function calculateMatchScore(
     expectationMatch = calculateExpectationMatch(answersA.module5, answersB.module5);
   }
 
+  // 维度6: 兴趣匹配 (0-20) — Module 1 Q6 hobbies
+  let interestMatch = 10; // 默认值
+  const interestsA = answersA.module1?.interests || [];
+  const interestsB = answersB.module1?.interests || [];
+  if (interestsA.length > 0 || interestsB.length > 0) {
+    interestMatch = calculateInterestMatch(interestsA, interestsB);
+  }
+
   // 统一输出为 0-100 百分制
   const valueAlignmentPct = (valueAlignment / 20) * 100;
   const lifestyleFitPct = (lifestyleFit / 15) * 100;
   const personalityMatchPct = (personalityMatch / 25) * 100;
   const interestOverlapPct = (interestOverlap / 20) * 100;
   const expectationMatchPct = (expectationMatch / 20) * 100;
+  const interestMatchPct = (interestMatch / 20) * 100;
 
   // 加权求和（权重和为1）
   const total =
@@ -576,7 +597,8 @@ export function calculateMatchScore(
     lifestyleFitPct * WEIGHTS.lifestyleFit +
     personalityMatchPct * WEIGHTS.personalityMatch +
     interestOverlapPct * WEIGHTS.interestOverlap +
-    expectationMatchPct * WEIGHTS.expectationMatch;
+    expectationMatchPct * WEIGHTS.expectationMatch +
+    interestMatchPct * WEIGHTS.interestMatch;
 
   return {
     total: Math.round(total * 100) / 100,
@@ -586,6 +608,7 @@ export function calculateMatchScore(
       personalityMatch: Math.round(personalityMatchPct * 100) / 100,
       interestOverlap: Math.round(interestOverlapPct * 100) / 100,
       expectationMatch: Math.round(expectationMatchPct * 100) / 100,
+      interestMatch: Math.round(interestMatchPct * 100) / 100,
     },
   };
 }
@@ -659,13 +682,21 @@ export function calculateScoreFast(
     ? calculateExpectationMatch(answersA.module5, answersB.module5)
     : 10;
 
+  // 维度6: 兴趣匹配
+  const interestsA = answersA.module1?.interests || [];
+  const interestsB = answersB.module1?.interests || [];
+  const interestMatch = (interestsA.length > 0 || interestsB.length > 0)
+    ? calculateInterestMatch(interestsA, interestsB)
+    : 10;
+
   // 加权求和 → 0-100 百分制
   const total =
     (valueAlignment / 20) * 100 * WEIGHTS.valueAlignment +
     (lifestyleFit / 15) * 100 * WEIGHTS.lifestyleFit +
     (personalityMatch / 25) * 100 * WEIGHTS.personalityMatch +
     (interestOverlap / 20) * 100 * WEIGHTS.interestOverlap +
-    (expectationMatch / 20) * 100 * WEIGHTS.expectationMatch;
+    (expectationMatch / 20) * 100 * WEIGHTS.expectationMatch +
+    (interestMatch / 20) * 100 * WEIGHTS.interestMatch;
 
   return Math.round(total * 100) / 100;
 }

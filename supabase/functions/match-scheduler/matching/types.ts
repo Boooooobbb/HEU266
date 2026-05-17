@@ -9,6 +9,7 @@ export interface Module1Answers {
   stage: "undergrad_low" | "undergrad_high" | "master" | "doctor";
   partnerStages: string[]; // 可多选，如 ['undergrad_low', 'undergrad_high', 'both']
   locations: string[];
+  interests: string[]; // 兴趣爱好（最多选12个）
 }
 
 // ============ Module 2: 生活颗粒度 ============
@@ -34,7 +35,7 @@ export interface Module2Answers {
 }
 
 // ============ Module 3: 性格调色盘 ============
-export type PreferenceType = "similar" | "complement" | "natural";
+export type PreferenceType = "similar" | "complement";
 
 export interface Module3Answers {
   q1Slider: number;
@@ -135,8 +136,9 @@ export interface MatchScore {
     valueAlignment: number; // 价值观契合 0-100
     lifestyleFit: number; // 生活习惯匹配 0-100
     personalityMatch: number; // 人格互补/相似 0-100
-    interestOverlap: number; // 兴趣重叠 0-100
+    interestOverlap: number; // 关系期待匹配 0-100
     expectationMatch: number; // 期望匹配 0-100
+    interestMatch: number; // 兴趣匹配 0-100
   };
   breakdown?: {
     sharedLocations: string[]; // 共同活动地点
@@ -166,6 +168,7 @@ export interface MatchReport {
     personalityMatch: number;
     interestOverlap: number;
     expectationMatch: number;
+    interestMatch: number;
   };
   radarData: {
     label: string[];
@@ -178,10 +181,11 @@ export interface MatchReport {
 // ============ 算法常量 ============
 export const WEIGHTS = {
   valueAlignment: 0.2, // 20%
-  lifestyleFit: 0.15, // 15%
-  personalityMatch: 0.25, // 25%
-  interestOverlap: 0.2, // 20%
-  expectationMatch: 0.2, // 20%
+  lifestyleFit: 0.2, // 20%
+  personalityMatch: 0.2, // 20%
+  interestOverlap: 0.15, // 15%
+  expectationMatch: 0.15, // 15%
+  interestMatch: 0.1, // 10%
 } as const;
 
 export const MAX_MATCHES_PER_USER = 1; // 每个用户最多1个匹配

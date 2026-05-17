@@ -13,6 +13,7 @@
  */
 
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
+import { QUESTIONNAIRE_TOTAL_QUESTIONS } from '@/utils/questionnaireProgress';
 
 const STORAGE_KEY_PREFIX = 'stitch_o_match_questionnaire';
 const LEGACY_STORAGE_KEY = 'stitch_o_match_questionnaire';
@@ -36,7 +37,7 @@ const MODULE_ROW_CONFIG = {
 type ModuleKey = keyof typeof MODULE_ROW_CONFIG;
 
 const MODULE_QUESTION_KEYS: Record<ModuleKey, readonly string[]> = {
-  module1: ['gender', 'expectedGender', 'stage', 'partnerStages', 'locations'],
+  module1: ['gender', 'expectedGender', 'stage', 'partnerStages', 'locations', 'interests'],
   module2: [
     'q1Schedule', 'q1Attitude', 'q2Space', 'q2Tolerance', 'q3Frequency',
     'q3Bottomline', 'q4Smoking', 'q4Bottomline', 'q5Alcohol', 'q5Bottomline',
@@ -617,5 +618,5 @@ export const getSaveStatus = async (): Promise<string> => {
   if (data.module4) completed += 6;
   if (data.module5) completed += 7;
 
-  return `上次保存: ${timeStr} (${completed}/33题)`;
+  return `上次保存: ${timeStr} (${completed}/${QUESTIONNAIRE_TOTAL_QUESTIONS}题)`;
 };

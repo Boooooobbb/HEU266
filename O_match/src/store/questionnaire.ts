@@ -4,7 +4,7 @@ interface QuestionnaireState {
   currentModule: number;
   // 存储每个模块的完成状态
   moduleProgress: {
-    module1: number; // 0-5
+    module1: number; // 0-6
     module2: number; // 0-5
     module3: number; // 0-10
     module4: number; // 0-6

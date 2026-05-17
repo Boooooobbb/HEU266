@@ -132,9 +132,18 @@ function generateMatchReport(
   if (dimensions.expectationMatch >= 75) {
     reasons.push("对理想伴侣的期望高度一致");
   }
+  if (dimensions.interestMatch >= 75) {
+    reasons.push("拥有共同的兴趣爱好");
+  }
 
-  // 生成话题建议
+  // 生成话题建议（优先使用共同兴趣）
   const topics: string[] = [];
+  const answersAInterests = (answersA?.module1?.interests || []) as string[];
+  const answersBInterests = (answersB?.module1?.interests || []) as string[];
+  const sharedInterests = answersAInterests.filter((i: string) => answersBInterests.includes(i));
+  if (sharedInterests.length > 0) {
+    topics.push(...sharedInterests.slice(0, 4));
+  }
   if (profileA.locations && profileB.locations) {
     const sharedLocations = (profileA.locations as string[]).filter(
       (l: string) => (profileB.locations as string[]).includes(l)
@@ -152,15 +161,17 @@ function generateMatchReport(
       personalityMatch: dimensions.personalityMatch,
       interestOverlap: dimensions.interestOverlap,
       expectationMatch: dimensions.expectationMatch,
+      interestMatch: dimensions.interestMatch,
     },
     radarData: {
-      label: ["价值观", "生活习惯", "性格互补", "关系期待", "期望匹配"],
+      label: ["价值观", "生活习惯", "性格互补", "关系期待", "期望匹配", "兴趣匹配"],
       score: [
         dimensions.valueAlignment,
         dimensions.lifestyleFit,
         dimensions.personalityMatch,
         dimensions.interestOverlap,
         dimensions.expectationMatch,
+        dimensions.interestMatch,
       ],
     },
     matchReason:
@@ -463,7 +474,7 @@ async function runMatching(client: any, weekTag: string) {
           id: crypto.randomUUID(),
           userAId: pair.leftId,
           userBId: pair.rightId,
-          score: { total: scoreTotal, dimensions: { valueAlignment: 0, lifestyleFit: 0, personalityMatch: 0, interestOverlap: 0, expectationMatch: 0 } },
+          score: { total: scoreTotal, dimensions: { valueAlignment: 0, lifestyleFit: 0, personalityMatch: 0, interestOverlap: 0, expectationMatch: 0, interestMatch: 0 } },
           weekTag,
           status: "pending",
           expiresAt: expiresAtStr,
@@ -551,6 +562,11 @@ async function runMatching(client: any, weekTag: string) {
                   name: "期望匹配度",
                   score: report.compatibility.expectationMatch,
                   weight: WEIGHTS.expectationMatch,
+                },
+                {
+                  name: "兴趣匹配度",
+                  score: report.compatibility.interestMatch,
+                  weight: WEIGHTS.interestMatch,
                 },
               ],
               radar_data: report.radarData,

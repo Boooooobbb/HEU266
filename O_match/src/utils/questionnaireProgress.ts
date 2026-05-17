@@ -8,10 +8,10 @@ export interface ModuleProgress {
   module5: number;
 }
 
-export const QUESTIONNAIRE_TOTAL_QUESTIONS = 33;
+export const QUESTIONNAIRE_TOTAL_QUESTIONS = 34;
 
 export const MODULE_MAX_PROGRESS = {
-  module1: 5,
+  module1: 6,
   module2: 5,
   module3: 10,
   module4: 6,
@@ -42,6 +42,7 @@ export const calculateModule1Progress = (
     module1?.stage,
     module1?.partnerStages?.length ? 'done' : '',
     module1?.locations?.length ? 'done' : '',
+    module1?.interests?.length ? 'done' : '',
   ].filter(Boolean).length;
 };
 

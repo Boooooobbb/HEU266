@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMatchStore } from '@/store';
 
-const RADAR_DIMENSION_LABELS = ['价值观', '生活习惯', '性格互补', '关系期待', '期望匹配'];
+const RADAR_DIMENSION_LABELS = ['价值观', '生活习惯', '性格互补', '关系期待', '期望匹配', '兴趣匹配'];
 
 // 正态分布参数（基于 1000 人测试数据）
 const DIST_MEAN = 54.4;
@@ -215,17 +215,14 @@ const MatchReportPage: React.FC = () => {
   // 五维度分数（0-100）
   const dimScores = matchReport.dimensions.map((d) => d.score);
 
-  // 计算五边形雷达图顶点坐标
+  // 计算六边形雷达图顶点坐标（6维等分圆）
   const getRadarPoints = () => {
     const center = 50;
     const maxRadius = 40;
-    const angles = [
-      -Math.PI / 2,                    // 顶部：价值观
-      -Math.PI / 2 + (2 * Math.PI) / 5, // 右上方：生活习惯
-      -Math.PI / 2 + (4 * Math.PI) / 5, // 右下方：性格互补
-      -Math.PI / 2 - (4 * Math.PI) / 5, // 左下方：关系期待
-      -Math.PI / 2 - (2 * Math.PI) / 5, // 左上方：期望匹配
-    ];
+    const angleCount = 6;
+    const angles = Array.from({ length: angleCount }, (_, i) =>
+      -Math.PI / 2 + (i * 2 * Math.PI) / angleCount
+    );
 
     return dimScores
       .map((score, i) => {
@@ -240,14 +237,11 @@ const MatchReportPage: React.FC = () => {
   // 标签位置
   const getLabelPositions = () => {
     const center = 50;
-    const labelRadius = 52;
-    const angles = [
-      -Math.PI / 2,
-      -Math.PI / 2 + (2 * Math.PI) / 5,
-      -Math.PI / 2 + (4 * Math.PI) / 5,
-      -Math.PI / 2 - (4 * Math.PI) / 5,
-      -Math.PI / 2 - (2 * Math.PI) / 5,
-    ];
+    const labelRadius = 54;
+    const angleCount = 6;
+    const angles = Array.from({ length: angleCount }, (_, i) =>
+      -Math.PI / 2 + (i * 2 * Math.PI) / angleCount
+    );
     return angles.map((angle) => ({
       x: center + labelRadius * Math.cos(angle),
       y: center + labelRadius * Math.sin(angle),
@@ -289,26 +283,29 @@ const MatchReportPage: React.FC = () => {
           </div>
           <div className="relative aspect-square w-full max-w-[300px] mx-auto flex items-center justify-center">
             {/* Radar Mesh Background */}
-            <div className="absolute inset-0 radar-grid bg-surface-container-high opacity-30" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }}></div>
-            <div className="absolute inset-4 radar-grid bg-surface-container-high opacity-50" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }}></div>
-            <div className="absolute inset-8 radar-grid bg-surface-container-high opacity-70" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }}></div>
+            <div className="absolute inset-0 radar-grid bg-surface-container-high opacity-30" style={{ clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)' }}></div>
+            <div className="absolute inset-4 radar-grid bg-surface-container-high opacity-50" style={{ clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)' }}></div>
+            <div className="absolute inset-8 radar-grid bg-surface-container-high opacity-70" style={{ clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)' }}></div>
             {/* Radar Polygon Fill */}
             <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100">
               <polygon className="fill-primary/20 stroke-primary stroke-[1.5]" points={getRadarPoints()}></polygon>
-              {RADAR_DIMENSION_LABELS.map((label, i) => (
-                <text
-                  key={label}
-                  className={`text-[6px] font-bold fill-on-surface ${i === 0 ? '[text-anchor:middle]' : i < 3 ? '[text-anchor:start]' : '[text-anchor:end]'}`}
-                  x={labels[i].x}
-                  y={labels[i].y}
-                  textAnchor={i === 0 ? 'middle' : i < 3 ? 'start' : 'end'}
-                >
-                  {label}
-                </text>
-              ))}
+              {RADAR_DIMENSION_LABELS.map((label, i) => {
+                const anchor = i === 0 ? 'middle' : i < 3 ? 'start' : 'end';
+                return (
+                  <text
+                    key={label}
+                    className="text-[6px] font-bold fill-on-surface"
+                    x={labels[i].x}
+                    y={labels[i].y}
+                    textAnchor={anchor}
+                  >
+                    {label}
+                  </text>
+                );
+              })}
               {/* 分数标注 */}
               {dimScores.map((score, i) => {
-                const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+                const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 6;
                 const scoreR = 40 * (score / 100) + 6;
                 const sx = 50 + scoreR * Math.cos(angle);
                 const sy = 50 + scoreR * Math.sin(angle);

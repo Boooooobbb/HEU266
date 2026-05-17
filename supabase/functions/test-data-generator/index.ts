@@ -45,13 +45,30 @@ function generateUserAnswers(userId: string, gender: string) {
     ["library", "sports_field", "dormitory"]
   ]);
 
+  const ALL_INTERESTS = [
+    "跳舞💃","篮球🏀","足球⚽","羽毛球🏸","乒乓球🏓","跑步🏃",
+    "健身💪","游泳🏊","瑜伽🧘","骑行🚴","滑雪🎿","滑冰⛸️",
+    "摄影📷","绘画🎨","音乐🎵","吉他🎸","钢琴🎹","小提琴🎻",
+    "阅读📚","写作✍️","电影🎬","动漫🎭","游戏🎮","编程💻",
+    "烹饪🍳","烘焙🧁","咖啡☕","旅行✈️","徒步🥾","露营🏕️",
+    "滑板🛹","桌游🎲","象棋♟️","剧本杀🔍","密室逃脱🗝️","手工✂️",
+    "养宠🐱","种花🌻","看展🏛️","话剧🎭","演唱会🎤","追星🌟",
+    "汉服👘","街舞🕺","说唱🎙️","架子鼓🥁","二次元🌸","书法🖌️",
+    "钓鱼🎣","攀岩🧗",
+  ];
+  // 随机选 3-8 个兴趣
+  const pickCount = 3 + Math.floor(Math.random() * 6);
+  const shuffled = [...ALL_INTERESTS].sort(() => Math.random() - 0.5);
+  const interests = shuffled.slice(0, pickCount);
+
   // Module 1
   answers.push(
     { user_id: userId, module_id: "module_1", question_id: "module_1.gender", answer_value: gender },
     { user_id: userId, module_id: "module_1", question_id: "module_1.expectedGender", answer_value: expectedGender },
     { user_id: userId, module_id: "module_1", question_id: "module_1.stage", answer_value: stage },
     { user_id: userId, module_id: "module_1", question_id: "module_1.partnerStages", answer_value: partnerStages },
-    { user_id: userId, module_id: "module_1", question_id: "module_1.locations", answer_value: locations }
+    { user_id: userId, module_id: "module_1", question_id: "module_1.locations", answer_value: locations },
+    { user_id: userId, module_id: "module_1", question_id: "module_1.interests", answer_value: interests }
   );
 
   // Module 2
@@ -72,7 +89,7 @@ function generateUserAnswers(userId: string, gender: string) {
   for (let q = 1; q <= 10; q++) {
     answers.push(
       { user_id: userId, module_id: "module_3", question_id: `module_3.q${q}Slider`, answer_value: randInt(0, 4) },
-      { user_id: userId, module_id: "module_3", question_id: `module_3.q${q}Preference`, answer_value: choice(["similar", "complement", "natural"]) }
+      { user_id: userId, module_id: "module_3", question_id: `module_3.q${q}Preference`, answer_value: choice(["similar", "complement"]) }
     );
   }
 
