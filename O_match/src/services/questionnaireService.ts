@@ -291,7 +291,8 @@ const isModule1Complete = (module1: QuestionnaireAnswer['module1']): boolean =>
     module1.expectedGender &&
     module1.stage &&
     module1.partnerStages?.length &&
-    module1.locations?.length
+    module1.locations?.length &&
+    module1.interests?.length
   );
 
 const isModule2Complete = (module2: QuestionnaireAnswer['module2']): boolean =>
@@ -375,6 +376,7 @@ export interface QuestionnaireAnswer {
     stage: string;
     partnerStages: string[];
     locations: string[];
+    interests: string[];
   };
   module2?: {
     q1Schedule: string;
