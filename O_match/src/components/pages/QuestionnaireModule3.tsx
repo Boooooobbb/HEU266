@@ -69,7 +69,7 @@ const QuestionnaireModule3: React.FC = () => {
 
   const { incompleteHintId, focusFirstIncomplete } = useIncompleteQuestionPrompt();
 
-  // 计算当前模块已完成题目数（只有 preference 选项选择后才计入完成度）
+  // 计算当前模块已完成题目数（slider 和 preference 都作答后才计入完成度）
   const currentModuleProgress = calculateModule3Progress(formData);
 
   // 将当前模块进度存入 store
@@ -87,7 +87,9 @@ const QuestionnaireModule3: React.FC = () => {
     hasScrolledRef.current = true;
     const questions = Array.from({ length: 10 }, (_, i) => ({
       id: `q${i + 1}`,
-      completed: formData[`q${i + 1}Preference` as keyof FormData] !== '',
+      completed:
+        formData[`q${i + 1}Slider` as keyof FormData] != null &&
+        formData[`q${i + 1}Preference` as keyof FormData] !== '',
     }));
     requestAnimationFrame(() => focusFirstIncomplete(questions));
   }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -110,18 +112,18 @@ const QuestionnaireModule3: React.FC = () => {
   };
 
   const nextModule = async () => {
-    // 找到第一个未完成的题目（需要 preference 选项选择后才算完成）
+    // 找到第一个未完成的题目（需要 slider 和 preference 都作答才算完成）
     const questions = [
-      { id: 'q1', completed: formData.q1Preference !== '' },
-      { id: 'q2', completed: formData.q2Preference !== '' },
-      { id: 'q3', completed: formData.q3Preference !== '' },
-      { id: 'q4', completed: formData.q4Preference !== '' },
-      { id: 'q5', completed: formData.q5Preference !== '' },
-      { id: 'q6', completed: formData.q6Preference !== '' },
-      { id: 'q7', completed: formData.q7Preference !== '' },
-      { id: 'q8', completed: formData.q8Preference !== '' },
-      { id: 'q9', completed: formData.q9Preference !== '' },
-      { id: 'q10', completed: formData.q10Preference !== '' },
+      { id: 'q1', completed: formData.q1Slider != null && formData.q1Preference !== '' },
+      { id: 'q2', completed: formData.q2Slider != null && formData.q2Preference !== '' },
+      { id: 'q3', completed: formData.q3Slider != null && formData.q3Preference !== '' },
+      { id: 'q4', completed: formData.q4Slider != null && formData.q4Preference !== '' },
+      { id: 'q5', completed: formData.q5Slider != null && formData.q5Preference !== '' },
+      { id: 'q6', completed: formData.q6Slider != null && formData.q6Preference !== '' },
+      { id: 'q7', completed: formData.q7Slider != null && formData.q7Preference !== '' },
+      { id: 'q8', completed: formData.q8Slider != null && formData.q8Preference !== '' },
+      { id: 'q9', completed: formData.q9Slider != null && formData.q9Preference !== '' },
+      { id: 'q10', completed: formData.q10Slider != null && formData.q10Preference !== '' },
     ];
 
     if (focusFirstIncomplete(questions)) {
@@ -135,19 +137,19 @@ const QuestionnaireModule3: React.FC = () => {
   };
 
   const handleModuleNavigate = (nextModuleId: number) => {
-    // 向前跳转：检查当前模块是否完成
+    // 向前跳转：检查当前模块是否完成（需要 slider 和 preference 都作答）
     if (nextModuleId > currentModule) {
       const questions = [
-        { id: 'q1', completed: formData.q1Preference !== '' },
-        { id: 'q2', completed: formData.q2Preference !== '' },
-        { id: 'q3', completed: formData.q3Preference !== '' },
-        { id: 'q4', completed: formData.q4Preference !== '' },
-        { id: 'q5', completed: formData.q5Preference !== '' },
-        { id: 'q6', completed: formData.q6Preference !== '' },
-        { id: 'q7', completed: formData.q7Preference !== '' },
-        { id: 'q8', completed: formData.q8Preference !== '' },
-        { id: 'q9', completed: formData.q9Preference !== '' },
-        { id: 'q10', completed: formData.q10Preference !== '' },
+        { id: 'q1', completed: formData.q1Slider != null && formData.q1Preference !== '' },
+        { id: 'q2', completed: formData.q2Slider != null && formData.q2Preference !== '' },
+        { id: 'q3', completed: formData.q3Slider != null && formData.q3Preference !== '' },
+        { id: 'q4', completed: formData.q4Slider != null && formData.q4Preference !== '' },
+        { id: 'q5', completed: formData.q5Slider != null && formData.q5Preference !== '' },
+        { id: 'q6', completed: formData.q6Slider != null && formData.q6Preference !== '' },
+        { id: 'q7', completed: formData.q7Slider != null && formData.q7Preference !== '' },
+        { id: 'q8', completed: formData.q8Slider != null && formData.q8Preference !== '' },
+        { id: 'q9', completed: formData.q9Slider != null && formData.q9Preference !== '' },
+        { id: 'q10', completed: formData.q10Slider != null && formData.q10Preference !== '' },
       ];
 
       if (focusFirstIncomplete(questions)) {

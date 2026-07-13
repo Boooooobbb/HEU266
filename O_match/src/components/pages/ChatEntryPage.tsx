@@ -3,9 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getBlockStatus, resolveChatContext } from '@/services/chatService';
 import { loadContactMethods } from '@/services/contactMethodsService';
 import { getUserMatchReport } from '@/services/matchingService';
-import { hasSubmittedQuestionnaire } from '@/services/questionnaireService';
-import { hasSupabaseConfig, supabase } from '@/lib/supabase';
-import { getCurrentUser } from '@/services/authService';
+import { hasSubmittedQuestionnaire, loadQuestionnaire } from '@/services/questionnaireService';
 import type { MatchReportData } from '@/types';
 
 const MATCH_WEEKDAY = 3; // 周三
@@ -95,28 +93,14 @@ const ChatEntryPage: React.FC = () => {
         return;
       }
 
-      if (!hasSubmittedQuestionnaire()) {
-        // 回落检查：数据库 profile 是否标记为已完成
-        let dbCompleted = false;
-        if (hasSupabaseConfig && supabase) {
-          const user = await getCurrentUser();
-          if (user) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('questionnaire_completed')
-              .eq('id', user.id)
-              .maybeSingle();
-            dbCompleted = profile?.questionnaire_completed === true;
-          }
-        }
+      // 先从 DB 同步问卷到 localStorage（解决 API 创建用户无本地数据的问题）
+      await loadQuestionnaire();
 
-        if (!dbCompleted) {
-          if (!mounted) return;
-          setNeedsQuestionnaire(true);
-          setLoading(false);
-          return;
-        }
-        // DB 标记已完成 → 继续走匹配流程
+      if (!hasSubmittedQuestionnaire()) {
+        if (!mounted) return;
+        setNeedsQuestionnaire(true);
+        setLoading(false);
+        return;
       }
 
       const context = await resolveChatContext();

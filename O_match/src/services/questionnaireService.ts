@@ -313,16 +313,16 @@ const isModule2Complete = (module2: QuestionnaireAnswer['module2']): boolean =>
 const isModule3Complete = (module3: QuestionnaireAnswer['module3']): boolean =>
   Boolean(
     module3 &&
-    module3.q1Preference &&
-    module3.q2Preference &&
-    module3.q3Preference &&
-    module3.q4Preference &&
-    module3.q5Preference &&
-    module3.q6Preference &&
-    module3.q7Preference &&
-    module3.q8Preference &&
-    module3.q9Preference &&
-    module3.q10Preference
+    module3.q1Slider != null && module3.q1Preference &&
+    module3.q2Slider != null && module3.q2Preference &&
+    module3.q3Slider != null && module3.q3Preference &&
+    module3.q4Slider != null && module3.q4Preference &&
+    module3.q5Slider != null && module3.q5Preference &&
+    module3.q6Slider != null && module3.q6Preference &&
+    module3.q7Slider != null && module3.q7Preference &&
+    module3.q8Slider != null && module3.q8Preference &&
+    module3.q9Slider != null && module3.q9Preference &&
+    module3.q10Slider != null && module3.q10Preference
   );
 
 const isModule4Complete = (module4: QuestionnaireAnswer['module4']): boolean =>
