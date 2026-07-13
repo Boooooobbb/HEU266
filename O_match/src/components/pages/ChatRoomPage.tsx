@@ -1,28 +1,28 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { chatApi } from '@/api';
-import { hasSupabaseConfig } from '@/lib/supabase';
 import { useCountdown } from '@/hooks';
-import type { ChatContext, ChatMessageItem } from '@/services/chatService';
+import { useMatchStore } from '@/store';
+import type { ChatContext, IceReplyResult, RoundStatus } from '@/services/chatService';
 import {
   blockUser,
+  confirmConnection,
   getBlockStatus,
-  loadMessages,
+  getPartnerContactInfo,
+  getRoundStatus,
   reportUser,
   resolveChatContext,
-  sendContactCard,
-  sendMessage,
-  subscribeMessages,
   setActiveLocalChatMatchId,
+  submitIceReply,
   unblockUser,
 } from '@/services/chatService';
-import { cancelMatching } from '@/services/matchingService';
 import type { ContactMethod } from '@/services/contactMethodsService';
-import { loadContactMethods } from '@/services/contactMethodsService';
-import {
-  addLocalNotificationForUser,
-  markLocalNotificationsReadForCurrentUserByKind,
-} from '@/services/notificationService';
+import { cancelMatching } from '@/services/matchingService';
+import type { MatchReportData, ResonancePoint } from '@/types';
+
+// ============================================================
+// 结构化破冰房间 — 替代自由匿名聊天
+// Round 1: 共鸣时刻 → Round 2: 破冰任务 → Round 3: 心电感应
+// ============================================================
 
 const stageLabelMap: Record<string, string> = {
   undergrad_low: '本科低年级',
@@ -37,300 +37,347 @@ const platformLabelMap: Record<string, string> = {
   douyin: '抖音',
 };
 
-const platformIconMap: Record<string, string> = {
-  wechat: 'chat_bubble',
-  qq: 'alternate_email',
-  douyin: 'music_note',
+const platformColorMap: Record<string, string> = {
+  wechat: 'bg-[#07C160]',
+  qq: 'bg-[#2A8CFF]',
+  douyin: 'bg-[#121212]',
 };
 
-const quickContactPlatforms: ContactMethod['platform'][] = ['wechat', 'qq', 'douyin'];
+const ROUND_LABELS = ['共鸣时刻', '破冰任务', '心电感应'];
+const ROUND_ICONS = ['🎵', '🧩', '💌'];
+const ROUND_PROMPTS = [
+  '看到这个共鸣点，说说你的想法...',
+  '面对这个破冰任务，你有什么想说的...',
+  '',
+];
 
 interface ChatRouteState {
   chatContext?: ChatContext;
-  chatPreload?: {
-    messages: ChatMessageItem[];
-    contactMethods: ContactMethod[];
-    isBlocked: boolean;
-  };
+  matchReport?: MatchReportData;
+  contactMethods?: ContactMethod[];
 }
 
 const ChatRoomPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const routeState = (location.state as ChatRouteState | null) ?? null;
-  const preloadedContext = routeState?.chatContext ?? null;
-  const preloadedData = routeState?.chatPreload ?? null;
-  const [messages, setMessages] = useState<ChatMessageItem[]>(preloadedData?.messages ?? []);
-  const [inputValue, setInputValue] = useState('');
-  const [contactMethods, setContactMethods] = useState<ContactMethod[]>(preloadedData?.contactMethods ?? []);
-  const [chatContext, setChatContext] = useState<ChatContext | null>(preloadedContext);
-  const [loading, setLoading] = useState(!preloadedData);
-  const [sending, setSending] = useState(false);
+
+  // ---- 核心状态 ----
+  const [chatContext, setChatContext] = useState<ChatContext | null>(routeState?.chatContext ?? null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [hint, setHint] = useState('');
-  const [isBlocked, setIsBlocked] = useState(preloadedData?.isBlocked ?? false);
+
+  // 冰破状态
+  const [roundStatus, setRoundStatus] = useState<RoundStatus>({
+    currentRound: 1,
+    myReplies: {},
+    partnerReplies: {},
+    partnerConfirmed: false,
+    iConfirmed: false,
+  });
+  // 缓存自己已提交的回复内容，用于 UI 展示（roundStatus.myReplies 只存 ID）
+  const [myReplyContents, setMyReplyContents] = useState<Record<number, string>>({});
+  const [myInput, setMyInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [partnerContact, setPartnerContact] = useState<ContactMethod[]>([]);
+
+  // 匹配报告数据
+  const [resonancePoints, setResonancePoints] = useState<ResonancePoint[]>([]);
+  const [iceBreakingTask, setIceBreakingTask] = useState<MatchReportData['iceBreakingTask'] | null>(null);
+
+  // 安全状态
+  const [isBlocked, setIsBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const countdown = useCountdown({ initialSeconds: 72 * 3600 });
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  // ---- 初始化 ----
   useEffect(() => {
     let mounted = true;
-    let unsubscribe = () => {};
 
-    const run = async () => {
+    const init = async () => {
       try {
         setLoading(true);
         setError('');
 
-        const context = preloadedContext ?? await resolveChatContext();
+        // 解析聊天上下文
+        const context = routeState?.chatContext ?? (await resolveChatContext());
         if (!mounted) return;
-
         setChatContext(context);
 
-        if (preloadedData) {
-          setMessages(preloadedData.messages);
-          setContactMethods(preloadedData.contactMethods);
-          setIsBlocked(preloadedData.isBlocked);
-        } else {
-          const [loadedMessages, methods] = await Promise.all([
-            loadMessages(context.matchId),
-            loadContactMethods(),
-          ]);
-          if (!mounted) return;
-
-          setMessages(loadedMessages);
-          setContactMethods(methods);
-
-          void getBlockStatus(context.matchId, context.partnerId ?? null).then((blockState) => {
-            if (!mounted) return;
-            setIsBlocked(blockState.isBlocked);
-          });
+        // 加载匹配报告数据
+        const report = routeState?.matchReport;
+        if (report) {
+          setResonancePoints(report.resonancePoints || []);
+          setIceBreakingTask(report.iceBreakingTask || null);
         }
 
-        setLoading(false);
+        // 加载冰破轮次状态
+        const status = await getRoundStatus(context.matchId);
+        if (!mounted) return;
+        setRoundStatus(status);
 
-        setActiveLocalChatMatchId(context.matchId);
-        void markLocalNotificationsReadForCurrentUserByKind('chat_message');
-
-        void chatApi.markAsRead(context.matchId).then(() => {
-          window.dispatchEvent(new Event('chat-unread-updated'));
-        });
-
-        void subscribeMessages(context.matchId, (newMessage) => {
-          setMessages((prev) => {
-            if (prev.some((item) => item.id === newMessage.id)) {
-              return prev;
-            }
-            return [...prev, newMessage];
-          });
-        }).then((nextUnsubscribe) => {
-          if (!mounted) {
-            nextUnsubscribe();
-            return;
+        if (status.iConfirmed && status.partnerConfirmed) {
+          setConnected(true);
+          // 页面刷新时已双向确认：加载对方联系方式
+          if (context.partnerId) {
+            getPartnerContactInfo(context.partnerId).then((contact) => {
+              if (contact.length > 0) setPartnerContact(contact);
+            });
           }
+        }
 
-          unsubscribe = nextUnsubscribe;
-        });
+        // 检查拉黑状态
+        setActiveLocalChatMatchId(context.matchId);
+        const blockState = await getBlockStatus(context.matchId, context.partnerId ?? null);
+        if (!mounted) return;
+        setIsBlocked(blockState.isBlocked);
+
+        setLoading(false);
       } catch {
         if (!mounted) return;
-        setError('加载聊天失败，请稍后重试');
+        setError('加载失败，请稍后重试');
         setLoading(false);
       }
     };
 
-    void run();
+    init();
 
     return () => {
       mounted = false;
       setActiveLocalChatMatchId(null);
-      unsubscribe();
     };
-  }, [preloadedContext, preloadedData]);
+  }, [routeState?.chatContext, routeState?.matchReport, routeState?.contactMethods]);
 
-  // 轮询回退：当 Supabase Realtime 不可用时，定期拉取新消息确保消息不丢失
+  // 如果匹配报告未预加载，尝试从 store 获取
   useEffect(() => {
-    if (!chatContext) return;
+    if (resonancePoints.length > 0 || !chatContext) return;
 
-    const POLL_INTERVAL_MS = 5_000;
+    const { matchReport } = useMatchStore.getState();
+    if (matchReport) {
+      setResonancePoints(matchReport.resonancePoints || []);
+      setIceBreakingTask(matchReport.iceBreakingTask || null);
+    }
+  }, [chatContext, resonancePoints.length]);
 
+  // 监听双向确认 → 触发庆祝
+  useEffect(() => {
+    if (roundStatus.iConfirmed && roundStatus.partnerConfirmed && !connected) {
+      loadPartnerContactAndCelebrate();
+    }
+  }, [roundStatus.iConfirmed, roundStatus.partnerConfirmed, connected, chatContext?.partnerId]);
+
+  // 生产环境轮询：等待对方回复时每 10s 刷新状态
+  useEffect(() => {
+    if (!chatContext || chatContext.isDemo) return;
+
+    const currentRound = roundStatus.currentRound;
+    // Round 3 不需要轮询回复（用确认机制），只在 Round 1/2 等待对方回复时轮询
+    if (currentRound >= 3) return;
+
+    const iHaveReplied = Boolean(roundStatus.myReplies[currentRound]);
+    const partnerHasReplied = Boolean(roundStatus.partnerReplies[currentRound]);
+    // 只有我已回复但对方未回复时才需要轮询
+    if (!iHaveReplied || partnerHasReplied) return;
+
+    const POLL_INTERVAL = 10_000;
     let mounted = true;
 
-    const pollNewMessages = async () => {
+    const poll = async () => {
+      if (!mounted) return;
       try {
-        const latestMessages = await loadMessages(chatContext.matchId);
+        const status = await getRoundStatus(chatContext.matchId);
         if (!mounted) return;
-
-        setMessages((prev) => {
-          const existingIds = new Set(prev.map((m) => m.id));
-          const newMessages = latestMessages.filter((m) => !existingIds.has(m.id));
-          if (newMessages.length === 0) return prev;
-          return [...prev, ...newMessages];
-        });
+        setRoundStatus(status);
       } catch {
-        // 轮询静默失败，不影响用户体验
+        // 轮询静默失败
       }
     };
 
-    const intervalId = setInterval(pollNewMessages, POLL_INTERVAL_MS);
+    const timer = setInterval(poll, POLL_INTERVAL);
+    // 立即执行一次
+    poll();
 
     return () => {
       mounted = false;
-      clearInterval(intervalId);
+      clearInterval(timer);
     };
-  }, [chatContext]);
+  }, [chatContext, roundStatus.currentRound, roundStatus.myReplies, roundStatus.partnerReplies]);
 
+  // 监听 demo 模式下对方的回复事件
   useEffect(() => {
-    if (loading || !messagesEndRef.current) {
-      return;
-    }
+    const handlePartnerReply = (event: Event) => {
+      const detail = (event as CustomEvent<{ matchId: string; round: number; reply: IceReplyResult }>).detail;
+      if (!detail || detail.matchId !== chatContext?.matchId) return;
 
+      setRoundStatus((prev) => ({
+        ...prev,
+        partnerReplies: { ...prev.partnerReplies, [detail.round]: detail.reply },
+      }));
+    };
+
+    const handlePartnerConfirm = (event: Event) => {
+      const detail = (event as CustomEvent<{ matchId: string }>).detail;
+      if (!detail || detail.matchId !== chatContext?.matchId) return;
+
+      setRoundStatus((prev) => ({ ...prev, partnerConfirmed: true }));
+    };
+
+    window.addEventListener('ice-partner-reply', handlePartnerReply);
+    window.addEventListener('ice-partner-confirmed', handlePartnerConfirm);
+
+    return () => {
+      window.removeEventListener('ice-partner-reply', handlePartnerReply);
+      window.removeEventListener('ice-partner-confirmed', handlePartnerConfirm);
+    };
+  }, [chatContext?.matchId]);
+
+  // 自动滚动
+  useEffect(() => {
+    if (loading || !messagesEndRef.current) return;
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
       });
     });
-  }, [loading, messages.length]);
+  }, [loading, roundStatus]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || !chatContext) return;
+  // ---- 业务逻辑 ----
 
-    const messageText = inputValue.trim();
-    const isOptimisticMode = hasSupabaseConfig;
-    const optimisticId = `optimistic_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const handleSubmitReply = async () => {
+    if (!myInput.trim() || !chatContext) return;
 
-    setSending(true);
+    const round = roundStatus.currentRound;
+    const content = myInput.trim();
+
+    setSubmitting(true);
     setError('');
 
-    if (isOptimisticMode) {
-      const optimisticMessage: ChatMessageItem = {
-        id: optimisticId,
-        sender: 'me',
-        content: messageText,
-        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        type: 'text',
-      };
+    const result = await submitIceReply(chatContext.matchId, round, content);
 
-      setMessages((prev) => [...prev, optimisticMessage]);
-      setInputValue('');
-    }
+    setSubmitting(false);
 
-    const result = await sendMessage(chatContext.matchId, messageText);
-
-    setSending(false);
-
-    if (!result.success || !result.message) {
-      if (isOptimisticMode) {
-        setMessages((prev) => prev.filter((item) => item.id !== optimisticId));
-        setInputValue(messageText);
-      }
-      setError(result.error || '发送失败，请稍后重试');
+    if (!result.success || !result.reply) {
+      setError(result.error || '提交失败');
       return;
     }
 
-    if (isOptimisticMode) {
-      const remoteMessage = result.message as ChatMessageItem;
-      setMessages((prev) => {
-        const remoteAlreadyExists = prev.some((item) => item.id === remoteMessage.id && item.id !== optimisticId);
-        if (remoteAlreadyExists) {
-          return prev.filter((item) => item.id !== optimisticId);
-        }
+    setMyInput('');
+    // 缓存回复内容用于展示
+    setMyReplyContents((prev) => ({ ...prev, [round]: content }));
+    setRoundStatus((prev) => ({
+      ...prev,
+      myReplies: { ...prev.myReplies, [round]: result.reply!.id },
+    }));
+  };
 
-        return prev.map((item) => (item.id === optimisticId ? remoteMessage : item));
-      });
+  const handleGoToNextRound = async () => {
+    if (!chatContext) return;
+    setError('');
+    try {
+      const status = await getRoundStatus(chatContext.matchId);
+      setRoundStatus(status);
+    } catch {
+      setError('刷新状态失败，请稍后重试');
+    }
+  };
+
+  const handleConfirmConnection = async () => {
+    if (!chatContext) return;
+
+    setSubmitting(true);
+    setError('');
+
+    const result = await confirmConnection(chatContext.matchId, chatContext.partnerId);
+
+    setSubmitting(false);
+
+    if (!result.success) {
+      setError(result.error || '操作失败');
+      return;
     }
 
-    if (chatContext.partnerId) {
-      void addLocalNotificationForUser(chatContext.partnerId, {
-        kind: 'chat_message',
-        title: '新消息',
-        content: messageText.slice(0, 32),
-        linkPath: '/chat-entry',
-        channel: 'in_app',
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
-    }
+    setRoundStatus((prev) => ({
+      ...prev,
+      iConfirmed: true,
+      partnerConfirmed: result.partnerConfirmed,
+    }));
 
-    if (!isOptimisticMode) {
-      setMessages((prev) => [...prev, result.message as ChatMessageItem]);
-      setInputValue('');
+    if (result.bothConfirmed) {
+      setConnected(true);
+      if (result.partnerContact && result.partnerContact.length > 0) {
+        setPartnerContact(result.partnerContact);
+      } else {
+        // 尝试主动获取
+        loadPartnerContactAndCelebrate();
+      }
+    } else {
+      setHint('已确认！等待对方确认后即可交换联系方式。');
     }
+  };
+
+  const loadPartnerContactAndCelebrate = async () => {
+    if (!chatContext?.partnerId) return;
+    const contact = await getPartnerContactInfo(chatContext.partnerId);
+    if (contact.length > 0) {
+      setPartnerContact(contact);
+    }
+    setConnected(true);
   };
 
   const handleReportPartner = async () => {
     if (!chatContext) return;
-
     const reason = window.prompt('请输入举报原因（必填）');
-    if (!reason) {
-      return;
-    }
-
+    if (!reason) return;
     const details = window.prompt('补充说明（可选）') || '';
     const result = await reportUser(chatContext.matchId, chatContext.partnerId, { reason, details });
-
     if (!result.success) {
       setError(result.error || '举报失败');
       return;
     }
-
     setHint('举报已提交，我们会尽快处理。');
   };
 
   const handleBlockPartner = async () => {
     if (!chatContext) return;
-
-    const confirmed = window.confirm('确认要拉黑该用户吗？拉黑后将无法继续互发消息，并且之后可以在这里取消拉黑。');
-    if (!confirmed) {
-      return;
-    }
-
+    const confirmed = window.confirm('确认要拉黑该用户吗？拉黑后将无法继续互发消息。');
+    if (!confirmed) return;
     const reason = window.prompt('可填写拉黑原因（可选）') || '';
     setBlocking(true);
     const result = await blockUser(chatContext.matchId, chatContext.partnerId, reason);
     setBlocking(false);
-
     if (!result.success) {
       setError(result.error || '拉黑失败');
       return;
     }
-
     setIsBlocked(true);
     setHint('已拉黑该用户。');
   };
 
   const handleUnblockPartner = async () => {
     if (!chatContext) return;
-
-    const confirmed = window.confirm('确认要取消拉黑吗？取消后可以继续互发消息。');
-    if (!confirmed) {
-      return;
-    }
-
+    const confirmed = window.confirm('确认要取消拉黑吗？');
+    if (!confirmed) return;
     setBlocking(true);
     const result = await unblockUser(chatContext.matchId, chatContext.partnerId);
     setBlocking(false);
-
     if (!result.success) {
       setError(result.error || '取消拉黑失败');
       return;
     }
-
     setIsBlocked(false);
     setHint('已取消拉黑该用户。');
   };
 
   const handleEndMatch = async () => {
     if (!chatContext) return;
-
-    const confirmed = window.confirm('确认结束这段匹配吗？结束后将返回等待页，并停止当前聊天。');
-    if (!confirmed) {
-      return;
-    }
-
+    const confirmed = window.confirm('确认结束这段匹配吗？');
+    if (!confirmed) return;
     setError('');
     setHint('');
-
     try {
       await cancelMatching();
       setHint('已结束匹配，正在返回等待页。');
@@ -340,111 +387,36 @@ const ChatRoomPage: React.FC = () => {
     }
   };
 
-  const handleSendContact = async (platform: string, value: string) => {
-    if (!chatContext) return;
-
-    setError('');
-    setHint('');
-
-    const confirmed = window.confirm(`确认发送${platformLabelMap[platform] || platform}：${value} 吗？`);
-    if (!confirmed) {
-      return;
-    }
-
-    const result = await sendContactCard(chatContext.matchId, platformLabelMap[platform] || platform, value);
-    if (!result.success || !result.message) {
-      setError(result.error || '发送失败，请稍后重试');
-      return;
-    }
-
-    setMessages((prev) => [...prev, result.message as ChatMessageItem]);
-    setHint(`${platformLabelMap[platform] || platform} 已发送`);
-  };
-
-  const handleQuickContactAction = async (platform: ContactMethod['platform']) => {
-    const targetMethod = contactMethods.find((item) => item.platform === platform);
-    const canSend = Boolean(targetMethod?.value.trim());
-
-    if (!canSend) {
-      navigate('/contact-methods');
-      return;
-    }
-
-    await handleSendContact(platform, targetMethod?.value || '');
-  };
-
-  const mobileBallSize = 56;
-  const mobilePanelApproxHeight = 240;
-  const dragThresholdPx = 6;
+  // ---- 渲染辅助 ----
 
   const partnerDisplayName = chatContext?.partnerNickname?.trim() || '橘子同学';
   const partnerStageText = chatContext?.partnerStage
     ? (stageLabelMap[chatContext.partnerStage] || chatContext.partnerStage)
     : '阶段未公开';
-  const partnerMatchRateText = typeof chatContext?.matchRate === 'number'
-    ? `${Math.round(chatContext.matchRate)}% 灵魂契合`
-    : '灵魂契合待生成';
+  const partnerMatchRateText =
+    typeof chatContext?.matchRate === 'number'
+      ? `${Math.round(chatContext.matchRate)}% 灵魂契合`
+      : '灵魂契合待生成';
 
-  const [mobileWidget, setMobileWidget] = useState(() => {
-    const initialX = typeof window === 'undefined' ? 16 : Math.max(16, window.innerWidth - mobileBallSize - 16);
-    const initialY = typeof window === 'undefined'
-      ? 220
-      : Math.max(120, window.innerHeight - mobileBallSize - 220);
+  const hasMyReply = (round: number) => Boolean(roundStatus.myReplies[round]);
+  const hasPartnerReply = (round: number) => Boolean(roundStatus.partnerReplies[round]);
 
-    return {
-      x: initialX,
-      y: initialY,
-      expanded: false,
-    };
-  });
+  const currentResonance = resonancePoints[0] || null;
+  const currentIceTask = iceBreakingTask;
 
-  const mobileDragRef = useRef({
-    pointerId: -1,
-    startX: 0,
-    startY: 0,
-    originX: 0,
-    originY: 0,
-    moved: false,
-  });
-
-  const clampMobileWidget = useCallback((x: number, y: number) => {
-    const viewportW = typeof window === 'undefined' ? 375 : window.innerWidth;
-    const viewportH = typeof window === 'undefined' ? 812 : window.innerHeight;
-
-    const minX = 12;
-    const maxX = Math.max(minX, viewportW - mobileBallSize - 12);
-    const minY = 88;
-    const maxY = Math.max(
-      minY,
-      viewportH - mobileBallSize - 120
-    );
-
-    const clampedX = Math.min(maxX, Math.max(minX, x));
-    const clampedY = Math.min(maxY, Math.max(minY, y));
-
-    return { x: clampedX, y: clampedY };
-  }, []);
-
-  useEffect(() => {
-    const onResize = () => {
-      setMobileWidget((prev) => {
-        const nextPos = clampMobileWidget(prev.x, prev.y);
-        if (nextPos.x === prev.x && nextPos.y === prev.y) return prev;
-        return { ...prev, ...nextPos };
-      });
-    };
-
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [clampMobileWidget]);
+  // ============================================================
+  // 渲染
+  // ============================================================
 
   return (
     <div className="relative z-10 pt-32 md:pt-44 pb-24">
-      {/* Floating Match Actions (Desktop) */}
-      <div className="hidden md:block fixed top-28 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-7xl pointer-events-none">
-        <div className="rounded-[999px] px-5 py-4 flex flex-col items-start md:flex-row md:flex-wrap md:items-center md:justify-between gap-4 shadow-[0_16px_40px_-16px_rgba(148,74,0,0.55)] pointer-events-auto border border-orange-300/70 bg-gradient-to-br from-orange-200/88 via-orange-100/88 to-orange-50/88 backdrop-blur-xl">
+      {/* ---- 固定顶栏 ---- */}
+      <div className="fixed top-28 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-7xl">
+        <div className="rounded-[999px] px-5 py-4 flex flex-col items-start md:flex-row md:flex-wrap md:items-center md:justify-between gap-4 shadow-[0_16px_40px_-16px_rgba(148,74,0,0.55)] border border-orange-300/70 bg-gradient-to-br from-orange-200/88 via-orange-100/88 to-orange-50/88 backdrop-blur-xl">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center text-2xl shadow border-2 border-white">🍊</div>
+            <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center text-2xl shadow border-2 border-white">
+              🍊
+            </div>
             <div>
               <div className="font-bold text-on-surface">{partnerDisplayName}</div>
               <div className="text-xs text-on-surface-variant">
@@ -452,37 +424,23 @@ const ChatRoomPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-full md:w-auto grid grid-cols-2 gap-2 md:flex md:items-center md:gap-4 md:flex-wrap md:justify-end">
-            <div className="w-full md:w-auto flex items-center justify-center md:justify-start gap-2 px-3 py-1.5 bg-orange-50/95 border border-orange-300/60 rounded-full">
+          <div className="w-full md:w-auto flex items-center gap-3 md:gap-4 flex-wrap">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50/95 border border-orange-300/60 rounded-full">
               <span className="material-symbols-outlined text-orange-700 text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
               <span className="text-xs font-bold text-orange-800">{countdown.formatted}</span>
             </div>
-            <button
-              onClick={handleEndMatch}
-              className="w-full md:w-auto px-4 py-2 text-xs font-bold text-white rounded-xl bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
-            >
+            <button onClick={handleEndMatch} className="px-4 py-2 text-xs font-bold text-white rounded-xl bg-red-500 hover:bg-red-600 transition-colors shadow-sm">
               结束匹配
             </button>
-            <button
-              onClick={handleReportPartner}
-              className="w-full md:w-auto px-4 py-1.5 text-xs font-bold text-[#A64B00] rounded-full border border-[#F2C28F] bg-[#FFE8CC] hover:bg-[#FFD9B0] transition-colors shadow-sm"
-            >
+            <button onClick={handleReportPartner} className="px-4 py-1.5 text-xs font-bold text-[#A64B00] rounded-full border border-[#F2C28F] bg-[#FFE8CC] hover:bg-[#FFD9B0] transition-colors shadow-sm">
               举报
             </button>
             {isBlocked ? (
-              <button
-                onClick={handleUnblockPartner}
-                disabled={blocking}
-                className="w-full md:w-auto px-4 py-1.5 text-xs font-bold text-orange-900 rounded-full border border-orange-300/80 bg-orange-100/90 hover:bg-orange-50 transition-colors shadow-sm disabled:opacity-40"
-              >
+              <button onClick={handleUnblockPartner} disabled={blocking} className="px-4 py-1.5 text-xs font-bold text-orange-900 rounded-full border border-orange-300/80 bg-orange-100/90 hover:bg-orange-50 transition-colors shadow-sm disabled:opacity-40">
                 {blocking ? '处理中...' : '取消拉黑'}
               </button>
             ) : (
-              <button
-                onClick={handleBlockPartner}
-                disabled={blocking}
-                className="w-full md:w-auto px-4 py-1.5 text-xs font-bold text-white rounded-full border border-orange-500/70 bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-40"
-              >
+              <button onClick={handleBlockPartner} disabled={blocking} className="px-4 py-1.5 text-xs font-bold text-white rounded-full border border-orange-500/70 bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-40">
                 {blocking ? '处理中...' : '拉黑'}
               </button>
             )}
@@ -490,228 +448,354 @@ const ChatRoomPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Match Actions (Mobile) */}
-      <div
-        className="md:hidden fixed z-[60]"
-        style={{ left: mobileWidget.x, top: mobileWidget.y }}
-      >
-        <div className="relative">
-          {mobileWidget.expanded && (
-            <div
-              className="absolute right-0 bottom-full mb-3 w-[min(92vw,320px)] rounded-3xl p-4 shadow-[0_16px_40px_-16px_rgba(148,74,0,0.55)] border border-orange-300/70 bg-gradient-to-br from-orange-200/88 via-orange-100/88 to-orange-50/88 backdrop-blur-xl"
-              style={{ maxHeight: `min(60vh, ${mobilePanelApproxHeight}px)` }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-primary-fixed flex items-center justify-center text-xl shadow border-2 border-white">🍊</div>
-                <div className="min-w-0">
-                  <div className="font-bold text-on-surface truncate">{partnerDisplayName}</div>
-                  <div className="text-xs text-on-surface-variant truncate">
-                    {partnerMatchRateText} · {partnerStageText}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 bg-orange-50/95 border border-orange-300/60 rounded-2xl">
-                  <span
-                    className="material-symbols-outlined text-orange-700 text-sm"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    schedule
-                  </span>
-                  <span className="text-xs font-bold text-orange-800">{countdown.formatted}</span>
-                </div>
-
-                {isBlocked ? (
-                  <button
-                    onClick={handleUnblockPartner}
-                    disabled={blocking}
-                    className="w-full px-4 py-2 text-xs font-bold text-orange-900 rounded-2xl border border-orange-300/80 bg-orange-100/90 hover:bg-orange-50 transition-colors shadow-sm disabled:opacity-40"
-                  >
-                    {blocking ? '处理中...' : '取消拉黑'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleBlockPartner}
-                    disabled={blocking}
-                    className="w-full px-4 py-2 text-xs font-bold text-white rounded-2xl border border-orange-500/70 bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-40"
-                  >
-                    {blocking ? '处理中...' : '拉黑'}
-                  </button>
-                )}
-
-                <button
-                  onClick={handleReportPartner}
-                  className="w-full px-4 py-2 text-xs font-bold text-[#A64B00] rounded-2xl border border-[#F2C28F] bg-[#FFE8CC] hover:bg-[#FFD9B0] transition-colors shadow-sm"
-                >
-                  举报
-                </button>
-
-                <button
-                  onClick={handleEndMatch}
-                  className="col-span-2 w-full px-4 py-2 text-xs font-bold text-white rounded-2xl bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
-                >
-                  结束匹配
-                </button>
-              </div>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className={`relative w-14 h-14 rounded-full glass-orb border border-white/70 flex items-center justify-center text-2xl select-none touch-none`}
-            data-expanded={mobileWidget.expanded}
-            aria-label={mobileWidget.expanded ? '收起匹配信息' : '展开匹配信息'}
-            onPointerDown={(event) => {
-              const target = event.currentTarget;
-              try {
-                target.setPointerCapture(event.pointerId);
-              } catch {
-                // ignore
-              }
-
-              mobileDragRef.current.pointerId = event.pointerId;
-              mobileDragRef.current.startX = event.clientX;
-              mobileDragRef.current.startY = event.clientY;
-              mobileDragRef.current.originX = mobileWidget.x;
-              mobileDragRef.current.originY = mobileWidget.y;
-              mobileDragRef.current.moved = false;
-            }}
-            onPointerMove={(event) => {
-              if (mobileDragRef.current.pointerId !== event.pointerId) return;
-
-              const dx = event.clientX - mobileDragRef.current.startX;
-              const dy = event.clientY - mobileDragRef.current.startY;
-
-              if (!mobileDragRef.current.moved && Math.hypot(dx, dy) > dragThresholdPx) {
-                mobileDragRef.current.moved = true;
-              }
-
-              const nextX = mobileDragRef.current.originX + dx;
-              const nextY = mobileDragRef.current.originY + dy;
-              const clamped = clampMobileWidget(nextX, nextY);
-              setMobileWidget((prev) => ({ ...prev, ...clamped }));
-            }}
-            onPointerUp={(event) => {
-              if (mobileDragRef.current.pointerId !== event.pointerId) return;
-              mobileDragRef.current.pointerId = -1;
-
-              if (!mobileDragRef.current.moved) {
-                setMobileWidget((prev) => ({ ...prev, expanded: !prev.expanded }));
-              }
-            }}
-          >
-            <span className="relative z-10">🍊</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Chat Messages Area */}
-      <div className="mx-auto w-[92%] max-w-7xl space-y-6 pb-30 md:pb-28">
-        <div className="flex justify-center">
-          <div className="bg-white/50 backdrop-blur-md border border-white/40 px-6 py-2.5 rounded-full text-[10px] font-black text-on-surface-variant/40 tracking-[0.2em] shadow-sm uppercase">
-            缘分始于 2 天前
+      {/* ---- 主内容区 ---- */}
+      <div className="mx-auto w-[92%] max-w-2xl space-y-8 pb-32">
+        {loading && (
+          <div className="text-center py-16">
+            <div className="text-on-surface-variant animate-pulse">加载破冰之旅...</div>
           </div>
-        </div>
+        )}
 
-        {/* Message List */}
-        <div className="space-y-8">
-          {loading && <div className="text-sm text-on-surface-variant text-center">加载聊天中...</div>}
-          {!loading && !chatContext?.partnerId && (
-            <div className="text-sm text-on-surface-variant text-center">
-              当前未找到有效匹配对象，已进入演示聊天模式。
+        {!loading && isBlocked && (
+          <div className="glass-card rounded-[2rem] p-12 text-center space-y-4">
+            <span className="material-symbols-outlined text-6xl text-on-surface-variant/40">block</span>
+            <h2 className="text-xl font-bold text-on-surface">已拉黑该用户</h2>
+            <p className="text-on-surface-variant text-sm">你可以取消拉黑以继续破冰流程。</p>
+          </div>
+        )}
+
+        {!loading && !isBlocked && connected && (
+          /* ---- 连接已建立（庆祝状态）---- */
+          <div className="space-y-8">
+            <div className="text-center py-8">
+              <div className="text-8xl mb-6 animate-bounce">🎉</div>
+              <h2 className="text-3xl font-black text-on-surface mb-2">连接已建立！</h2>
+              <p className="text-on-surface-variant">
+                你们已经通过了三轮破冰，以下是 {partnerDisplayName} 的联系方式：
+              </p>
             </div>
-          )}
 
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex items-end gap-4 max-w-full ${msg.sender === 'me' ? 'flex-row-reverse' : ''}`}
-            >
-              <div className={`w-12 h-12 rounded-[1.25rem] flex-shrink-0 flex items-center justify-center text-2xl shadow-sm border border-white ${msg.sender === 'me' ? 'warm-gradient' : 'bg-primary-fixed'}`}>
-                {msg.sender === 'me' ? '👤' : '🍊'}
+            {partnerContact.length > 0 ? (
+              <div className="space-y-3">
+                {partnerContact.map((c) => (
+                  <div key={c.platform} className="glass-card rounded-2xl p-5 flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl ${platformColorMap[c.platform] || 'bg-primary'} flex items-center justify-center text-white text-lg font-bold`}>
+                      {platformLabelMap[c.platform]?.[0] || '?'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-on-surface-variant">{platformLabelMap[c.platform] || c.platform}</div>
+                      <div className="text-lg font-bold text-on-surface truncate">{c.value}</div>
+                    </div>
+                    <button
+                      onClick={() => { void navigator.clipboard.writeText(c.value); setHint(`已复制${platformLabelMap[c.platform]}`); }}
+                      className="px-4 py-2 text-xs font-bold text-primary rounded-full border border-primary/30 hover:bg-primary/5 transition-colors"
+                    >
+                      复制
+                    </button>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2">
-                <div className={`glass-card px-6 py-4 rounded-3xl shadow-sm text-[15px] text-on-surface leading-relaxed ${msg.sender === 'me' ? 'text-white warm-gradient rounded-br-none' : 'rounded-bl-none'} ${msg.type === 'contact_card' ? 'ring-1 ring-orange-300/50' : ''}`}>
-                  {msg.type === 'contact_card' && (
-                    <div className="text-[11px] uppercase tracking-wider opacity-80 mb-1">联系方式卡片</div>
-                  )}
-                  {msg.content}
-                </div>
-                <span className={`text-[11px] text-on-surface-variant/30 ml-2 font-medium ${msg.sender === 'me' ? 'mr-2' : 'ml-2'}`}>{msg.time}</span>
+            ) : (
+              <div className="text-center text-on-surface-variant text-sm">
+                对方暂未设置联系方式。请等待对方补充。
               </div>
+            )}
+
+            <div className="text-center pt-4">
+              <p className="text-xs text-on-surface-variant/50">
+                🍊 感谢你完成破冰之旅，快去建立真正的连接吧！
+              </p>
             </div>
-          ))}
-          <div ref={messagesEndRef} style={{ scrollMarginBottom: '280px' }} />
-        </div>
+          </div>
+        )}
 
-        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-        {hint && <div className="text-green-600 text-sm text-center">{hint}</div>}
-      </div>
-
-      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+165px)] md:bottom-[120px] left-0 right-0 z-[45] px-4 md:px-0">
-        <div className="mx-auto w-[92%] max-w-7xl">
-          <div className="glass-card rounded-[999px] px-4 py-3 md:px-5 md:py-4 shadow-md border-white/60">
-            <div className="flex flex-wrap gap-2">
-              {quickContactPlatforms.map((platform) => {
-                const targetMethod = contactMethods.find((item) => item.platform === platform);
-                const canSend = Boolean(targetMethod?.value.trim());
-
+        {!loading && !isBlocked && !connected && (
+          <>
+            {/* ---- 轮次进度指示器 ---- */}
+            <div className="flex items-center justify-center gap-3 py-4">
+              {[1, 2, 3].map((round) => {
+                const isActive = round === roundStatus.currentRound;
+                const isDone = round < roundStatus.currentRound || (round === roundStatus.currentRound && hasMyReply(round) && hasPartnerReply(round));
                 return (
-                  <button
-                    key={platform}
-                    onClick={() => {
-                      void handleQuickContactAction(platform);
-                    }}
-                    className={`px-3 py-2 rounded-full text-xs font-bold transition-colors ${
-                      !canSend
-                        ? 'text-[#A64B00] bg-[#FFE8CC] border border-[#F2C28F] hover:bg-[#FFD9B0]'
-                        : platform === 'wechat'
-                          ? 'text-white bg-[#07C160] hover:bg-[#06AD56]'
-                          : platform === 'qq'
-                            ? 'text-white bg-[#2A8CFF] hover:bg-[#1E73E8]'
-                            : 'text-white bg-[#121212] hover:bg-[#000000]'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1">
-                      {platformIconMap[platform] && (
-                        <span className="material-symbols-outlined text-[14px] leading-none">
-                          {platformIconMap[platform]}
-                        </span>
+                  <React.Fragment key={round}>
+                    {round > 1 && (
+                      <div className={`w-8 h-0.5 rounded-full transition-colors ${isDone ? 'bg-primary' : 'bg-outline-variant/30'}`} />
+                    )}
+                    <div
+                      className={`
+                        flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all
+                        ${isActive ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-110' : ''}
+                        ${isDone && !isActive ? 'bg-primary/10 text-primary' : ''}
+                        ${!isActive && !isDone ? 'bg-surface-container-low text-on-surface-variant/50' : ''}
+                      `}
+                    >
+                      <span>{ROUND_ICONS[round - 1]}</span>
+                      <span className="hidden sm:inline">{ROUND_LABELS[round - 1]}</span>
+                      {hasMyReply(round) && hasPartnerReply(round) && (
+                        <span className="material-symbols-outlined text-sm text-green-500" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                       )}
-                      <span>{canSend ? `发送${platformLabelMap[platform] || platform}` : `设置${platformLabelMap[platform] || platform}`}</span>
-                    </span>
-                  </button>
+                    </div>
+                  </React.Fragment>
                 );
               })}
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Floating Input Area */}
-      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] md:bottom-0 left-0 right-0 px-4 md:px-0 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-8 pt-4 bg-gradient-to-t from-[#fdf9f3] via-[#fdf9f3]/90 to-transparent z-50">
-        <div className="mx-auto w-[92%] max-w-7xl">
-          <div className="glass-card rounded-[2.5rem] p-2 shadow-lg flex items-center gap-2 border-white/70">
-            <input
-              className="flex-1 bg-transparent border-none rounded-2xl px-4 py-3 text-base focus:ring-0 placeholder:text-on-surface-variant/30 font-medium"
-              placeholder="回复 Orange..."
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={sending || !chatContext || isBlocked}
-              className="w-12 h-10 rounded-full warm-gradient text-white flex items-center justify-center shadow-md active:scale-95 transition-transform disabled:opacity-40"
-            >
-              <span className="material-symbols-outlined text-xl">send</span>
-            </button>
-          </div>
-        </div>
+            {/* ---- Round 1: 共鸣时刻 ---- */}
+            {roundStatus.currentRound === 1 && (
+              <div className="space-y-6">
+                {currentResonance ? (
+                  <div className={`glass-card rounded-[2rem] p-8 space-y-4 border ${
+                    currentResonance.color === 'primary' ? 'border-primary/20' :
+                    currentResonance.color === 'secondary' ? 'border-secondary/20' : 'border-tertiary/20'
+                  }`}>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl ${
+                      currentResonance.color === 'primary' ? 'bg-primary-fixed' :
+                      currentResonance.color === 'secondary' ? 'bg-secondary-fixed' : 'bg-tertiary-fixed'
+                    }`}>
+                      <span className="material-symbols-outlined">{currentResonance.icon}</span>
+                    </div>
+                    <h3 className="text-2xl font-black text-on-surface">{currentResonance.title}</h3>
+                    <p className="text-on-surface-variant leading-relaxed">{currentResonance.description}</p>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-wider uppercase">
+                      <span className="w-1 h-1 rounded-full bg-primary" />
+                      你们的共鸣时刻
+                    </div>
+                  </div>
+                ) : (
+                  <div className="glass-card rounded-[2rem] p-8 text-center space-y-4">
+                    <div className="text-5xl">🎵</div>
+                    <h3 className="text-2xl font-black text-on-surface">共鸣时刻</h3>
+                    <p className="text-on-surface-variant">
+                      匹配报告显示你们有多处灵魂共鸣。分享一下你对这些共同点的想法吧。
+                    </p>
+                  </div>
+                )}
+
+                {/* 回复区 */}
+                {!hasMyReply(1) && (
+                  <div className="glass-card rounded-[2rem] p-6 space-y-4">
+                    <p className="text-sm font-bold text-on-surface">
+                      分享一下你对这个共鸣时刻的想法...
+                    </p>
+                    <textarea
+                      className="w-full bg-white/60 border border-white/60 rounded-2xl px-5 py-4 text-base focus:ring-2 focus:ring-primary/30 focus:border-primary/50 resize-none placeholder:text-on-surface-variant/30"
+                      rows={3}
+                      placeholder={ROUND_PROMPTS[0]}
+                      value={myInput}
+                      onChange={(e) => setMyInput(e.target.value)}
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSubmitReply}
+                        disabled={submitting || !myInput.trim()}
+                        className="px-8 py-3 bg-primary text-white rounded-full font-bold shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-40"
+                      >
+                        {submitting ? '发送中...' : '提交回复'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 已回复显示 */}
+                {hasMyReply(1) && (
+                  <div className="space-y-4">
+                    <div className="flex items-end gap-3 flex-row-reverse">
+                      <div className="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-lg">👤</div>
+                      <div className="bg-primary text-white px-5 py-3 rounded-2xl rounded-br-none max-w-[80%]">
+                        <p className="text-sm">{myReplyContents[1] || '（已回复）'}</p>
+                      </div>
+                    </div>
+
+                    {hasPartnerReply(1) && roundStatus.partnerReplies[1] ? (
+                      <>
+                        <div className="flex items-end gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-lg">🍊</div>
+                          <div className="glass-card px-5 py-3 rounded-2xl rounded-bl-none max-w-[80%]">
+                            <p className="text-sm text-on-surface">{roundStatus.partnerReplies[1].content}</p>
+                          </div>
+                        </div>
+                        <div className="text-center pt-4">
+                          <button
+                            onClick={handleGoToNextRound}
+                            className="px-10 py-3 bg-primary text-white rounded-full font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center gap-2 mx-auto"
+                          >
+                            进入下一轮
+                            <span className="material-symbols-outlined">arrow_forward</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-6">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-sm">
+                          <span className="animate-spin inline-block w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full" />
+                          等待对方回复...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ---- Round 2: 破冰任务 ---- */}
+            {roundStatus.currentRound === 2 && (
+              <div className="space-y-6">
+                {currentIceTask ? (
+                  <div className="glass-card rounded-[2rem] p-8 space-y-4 border border-secondary/20 bg-gradient-to-br from-secondary-fixed/30 to-white">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="material-symbols-outlined text-secondary text-2xl">celebration</span>
+                      <h3 className="text-2xl font-black text-on-surface">{currentIceTask.title}</h3>
+                    </div>
+                    <p className="text-on-surface-variant leading-relaxed">{currentIceTask.description}</p>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-[10px] font-bold tracking-wider uppercase">
+                      <span className="w-1 h-1 rounded-full bg-secondary" />
+                      {currentIceTask.location || 'Soul Connection'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="glass-card rounded-[2rem] p-8 text-center space-y-4">
+                    <div className="text-5xl">🧩</div>
+                    <h3 className="text-2xl font-black text-on-surface">破冰任务</h3>
+                    <p className="text-on-surface-variant">
+                      一起完成这个特别的任务，让你们的连接更进一步。
+                    </p>
+                  </div>
+                )}
+
+                {!hasMyReply(2) && (
+                  <div className="glass-card rounded-[2rem] p-6 space-y-4">
+                    <p className="text-sm font-bold text-on-surface">
+                      完成这个破冰任务，说说你的想法...
+                    </p>
+                    <textarea
+                      className="w-full bg-white/60 border border-white/60 rounded-2xl px-5 py-4 text-base focus:ring-2 focus:ring-primary/30 focus:border-primary/50 resize-none placeholder:text-on-surface-variant/30"
+                      rows={3}
+                      placeholder={ROUND_PROMPTS[1]}
+                      value={myInput}
+                      onChange={(e) => setMyInput(e.target.value)}
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSubmitReply}
+                        disabled={submitting || !myInput.trim()}
+                        className="px-8 py-3 bg-primary text-white rounded-full font-bold shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-40"
+                      >
+                        {submitting ? '发送中...' : '提交回复'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {hasMyReply(2) && (
+                  <div className="space-y-4">
+                    <div className="flex items-end gap-3 flex-row-reverse">
+                      <div className="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-lg">👤</div>
+                      <div className="bg-primary text-white px-5 py-3 rounded-2xl rounded-br-none max-w-[80%]">
+                        <p className="text-sm">{myReplyContents[2] || '（已回复）'}</p>
+                      </div>
+                    </div>
+
+                    {hasPartnerReply(2) && roundStatus.partnerReplies[2] ? (
+                      <>
+                        <div className="flex items-end gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-lg">🍊</div>
+                          <div className="glass-card px-5 py-3 rounded-2xl rounded-bl-none max-w-[80%]">
+                            <p className="text-sm text-on-surface">{roundStatus.partnerReplies[2].content}</p>
+                          </div>
+                        </div>
+                        <div className="text-center pt-4">
+                          <button
+                            onClick={handleGoToNextRound}
+                            className="px-10 py-3 bg-primary text-white rounded-full font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center gap-2 mx-auto"
+                          >
+                            进入最后一轮
+                            <span className="material-symbols-outlined">arrow_forward</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-6">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-sm">
+                          <span className="animate-spin inline-block w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full" />
+                          等待对方回复...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ---- Round 3: 心电感应 ---- */}
+            {roundStatus.currentRound === 3 && !roundStatus.iConfirmed && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-[2rem] p-10 text-center space-y-6 border border-pink-200/50 bg-gradient-to-br from-pink-50/80 to-white">
+                  <div className="text-7xl animate-pulse">💌</div>
+                  <h3 className="text-3xl font-black text-on-surface">心电感应</h3>
+                  <p className="text-on-surface-variant leading-relaxed max-w-md mx-auto">
+                    你们已经完成了两轮破冰，彼此有了初步的了解。
+                    <br />
+                    现在，是否愿意交换联系方式，建立真正的连接？
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                    <button
+                      onClick={handleConfirmConnection}
+                      disabled={submitting}
+                      className="px-10 py-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-40 text-lg"
+                    >
+                      {submitting ? '处理中...' : '愿意交换联系方式 💌'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Round 3: 我已确认，等待对方 */}
+            {roundStatus.currentRound === 3 && roundStatus.iConfirmed && !roundStatus.partnerConfirmed && !connected && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-[2rem] p-10 text-center space-y-4">
+                  <div className="text-6xl">💌</div>
+                  <h3 className="text-2xl font-black text-on-surface">已发送确认</h3>
+                  <p className="text-on-surface-variant">
+                    你已确认愿意交换联系方式。
+                  </p>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-sm">
+                    <span className="animate-spin inline-block w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full" />
+                    等待对方确认...
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Round 3: 对方已确认，等待我 */}
+            {roundStatus.currentRound === 3 && !roundStatus.iConfirmed && roundStatus.partnerConfirmed && (
+              <div className="space-y-6">
+                <div className="glass-card rounded-[2rem] p-10 text-center space-y-6 border border-pink-200/50 bg-gradient-to-br from-pink-50/80 to-white">
+                  <div className="text-6xl">💌</div>
+                  <h3 className="text-2xl font-black text-on-surface">对方已确认！</h3>
+                  <p className="text-on-surface-variant">
+                    {partnerDisplayName} 愿意与你交换联系方式。
+                    <br />
+                    你是否也愿意？
+                  </p>
+                  <button
+                    onClick={handleConfirmConnection}
+                    disabled={submitting}
+                    className="px-10 py-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-40 text-lg"
+                  >
+                    {submitting ? '处理中...' : '我愿意 💌'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+        {hint && <div className="text-green-600 text-sm text-center">{hint}</div>}
+        <div ref={messagesEndRef} />
       </div>
-      <div className="h-4 md:hidden" />
     </div>
   );
 };

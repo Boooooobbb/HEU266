@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getBlockStatus, loadMessages, resolveChatContext } from '@/services/chatService';
+import { getBlockStatus, resolveChatContext } from '@/services/chatService';
 import { loadContactMethods } from '@/services/contactMethodsService';
+import { getUserMatchReport } from '@/services/matchingService';
 import { hasSubmittedQuestionnaire } from '@/services/questionnaireService';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase';
+import { getCurrentUser } from '@/services/authService';
+import type { MatchReportData } from '@/types';
 
 const MATCH_WEEKDAY = 3; // 周三
 const MATCH_HOUR = 12;
@@ -68,7 +72,6 @@ const ChatEntryPage: React.FC = () => {
     let progress = 10;
     setEntryProgress(progress);
 
-    // Fast start + slow finish gives users a sense of momentum without fake instant completion.
     const timer = window.setInterval(() => {
       const target = 93;
       const step = Math.max(0.7, (target - progress) * 0.08);
@@ -86,40 +89,48 @@ const ChatEntryPage: React.FC = () => {
 
     const run = async () => {
       if (forceNoMatchDemo) {
-        if (!mounted) {
-          return;
-        }
-
+        if (!mounted) return;
         setNeedsQuestionnaire(false);
         setLoading(false);
         return;
       }
 
       if (!hasSubmittedQuestionnaire()) {
-        if (!mounted) {
-          return;
+        // 回落检查：数据库 profile 是否标记为已完成
+        let dbCompleted = false;
+        if (hasSupabaseConfig && supabase) {
+          const user = await getCurrentUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('questionnaire_completed')
+              .eq('id', user.id)
+              .maybeSingle();
+            dbCompleted = profile?.questionnaire_completed === true;
+          }
         }
 
-        setNeedsQuestionnaire(true);
-        setLoading(false);
-        return;
+        if (!dbCompleted) {
+          if (!mounted) return;
+          setNeedsQuestionnaire(true);
+          setLoading(false);
+          return;
+        }
+        // DB 标记已完成 → 继续走匹配流程
       }
 
       const context = await resolveChatContext();
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       if (context.partnerId) {
-        const [messages, contactMethods, blockStatus] = await Promise.all([
-          loadMessages(context.matchId),
+        // 并行加载：匹配报告 + 联系方式 + 拉黑状态
+        const [matchReport, contactMethods, blockStatus] = await Promise.all([
+          getUserMatchReport().catch((): MatchReportData | null => null),
           loadContactMethods(),
           getBlockStatus(context.matchId, context.partnerId ?? null),
         ]);
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         setEntryProgress(100);
 
@@ -128,19 +139,15 @@ const ChatEntryPage: React.FC = () => {
           window.setTimeout(() => resolve(), 120);
         });
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         navigate('/chat', {
           replace: true,
           state: {
             chatContext: context,
-            chatPreload: {
-              messages,
-              contactMethods,
-              isBlocked: blockStatus.isBlocked,
-            },
+            matchReport,
+            contactMethods,
+            isBlocked: blockStatus.isBlocked,
           },
         });
         return;
@@ -158,11 +165,12 @@ const ChatEntryPage: React.FC = () => {
 
   if (loading) {
     const currentProgress = Math.min(100, Math.round(entryProgress));
+    // 更新加载文案，面向冰破体验
     const stageText = currentProgress < 40
-      ? '正在连接你的聊天空间'
+      ? '正在准备破冰之旅'
       : currentProgress < 80
-        ? '正在同步最近聊天记录'
-        : '即将进入聊天';
+        ? '正在分析你们的共鸣时刻'
+        : '即将开启破冰';
 
     return (
       <main className="pt-24 pb-32 px-4 md:px-8 max-w-4xl mx-auto">
@@ -196,10 +204,10 @@ const ChatEntryPage: React.FC = () => {
 
         {needsQuestionnaire ? (
           <>
-            <h1 className="font-headline text-2xl md:text-3xl font-extrabold text-on-surface mb-3">先完成问卷，再开启聊天</h1>
+            <h1 className="font-headline text-2xl md:text-3xl font-extrabold text-on-surface mb-3">先完成问卷，再开启破冰</h1>
             <p className="text-on-surface-variant leading-relaxed max-w-xl mx-auto">
               为了给你找到更合拍的对象，请先完成并提交问卷。
-              填写越认真，后续匹配和聊天体验会越好。
+              填写越认真，后续匹配和破冰体验会越好。
             </p>
           </>
         ) : (
@@ -240,7 +248,7 @@ const ChatEntryPage: React.FC = () => {
               to="/chat"
               className="px-6 py-3 rounded-full sunset-gradient text-white font-bold shadow-lg shadow-orange-700/10"
             >
-              仅供测试：前往聊天页
+              仅供测试：前往破冰页
             </Link>
           )}
         </div>

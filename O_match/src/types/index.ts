@@ -64,20 +64,25 @@ export interface Match {
   remainingTime: number; // 秒
 }
 
-// 聊天相关类型
-export interface ChatMessage {
+// 结构化破冰相关类型
+export type IceBreakingRound = 1 | 2 | 3;
+
+export interface IceReply {
   id: string;
-  senderId: string;
-  receiverId: string;
+  round: IceBreakingRound;
+  userId: string;
   content: string;
   createdAt: string;
-  read: boolean;
 }
 
-export interface ChatSession {
+export interface IceBreakingState {
   matchId: string;
-  messages: ChatMessage[];
-  unreadCount: number;
+  currentRound: IceBreakingRound;
+  myReplies: Record<number, string>;
+  partnerReplies: Record<number, IceReply>;
+  partnerConfirmed: boolean;
+  iConfirmed: boolean;
+  connected: boolean;
 }
 
 // 通用 API 响应类型
@@ -126,11 +131,6 @@ export interface SubmitAnswerRequest {
 
 export interface JoinMatchRequest {
   matchWeek: string;
-}
-
-export interface SendMessageRequest {
-  matchId: string;
-  content: string;
 }
 
 // 匹配报告相关类型

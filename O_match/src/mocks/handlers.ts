@@ -29,26 +29,6 @@ const mockMatch = {
   remainingTime: 72 * 3600,
 };
 
-const mockMessages: Array<{
-  id: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  createdAt: string;
-  read: boolean;
-}> = [];
-
-const readUnreadCount = () => {
-  const raw = localStorage.getItem(LOCAL_CHAT_UNREAD_COUNT_KEY);
-  if (raw === null) {
-    localStorage.setItem(LOCAL_CHAT_UNREAD_COUNT_KEY, '2');
-    return 2;
-  }
-
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
 const writeUnreadCount = (count: number) => {
   localStorage.setItem(LOCAL_CHAT_UNREAD_COUNT_KEY, String(Math.max(0, count)));
 };
@@ -269,53 +249,51 @@ export const handlers = [
     });
   }),
 
-  // ============ 聊天相关 ============
-  // GET /api/chat/messages/:matchId
-  http.get('/api/chat/messages/:matchId', async () => {
+  // ============ 冰破聊天相关 ============
+  // GET /api/chat/round-status/:matchId
+  http.get('/api/chat/round-status/:matchId', async () => {
     await delay(300);
     return HttpResponse.json({
       code: 200,
       message: '获取成功',
       data: {
-        list: mockMessages,
-        total: 3,
-        page: 1,
-        pageSize: 20,
+        currentRound: 1,
+        myReplies: {},
+        partnerReplies: {},
+        partnerConfirmed: false,
+        iConfirmed: false,
       },
     });
   }),
 
-  // POST /api/chat/send
-  http.post('/api/chat/send', async ({ request }) => {
+  // POST /api/chat/submit-reply
+  http.post('/api/chat/submit-reply', async () => {
     await delay(200);
-    const body = await request.json() as { matchId: string; content: string };
     return HttpResponse.json({
       code: 200,
-      message: '发送成功',
+      message: '提交成功',
       data: {
-        id: 'msg_' + Date.now(),
-        senderId: mockUser.id,
-        receiverId: 'partner_001',
-        content: body.content,
+        id: 'ireply_' + Date.now(),
         createdAt: new Date().toISOString(),
-        read: false,
       },
     });
   }),
 
-  // GET /api/chat/unread-count
-  http.get('/api/chat/unread-count', async () => {
-    await delay(200);
+  // POST /api/chat/confirm-connection
+  http.post('/api/chat/confirm-connection', async () => {
+    await delay(300);
     return HttpResponse.json({
       code: 200,
-      message: '获取成功',
+      message: '确认成功',
       data: {
-        count: readUnreadCount(),
+        partnerContact: [
+          { platform: 'wechat', value: 'Orange_Demo', enabled: true },
+        ],
       },
     });
   }),
 
-  // POST /api/chat/read/:matchId
+  // POST /api/chat/read/:matchId（保留兼容）
   http.post('/api/chat/read/:matchId', async () => {
     writeUnreadCount(0);
     return HttpResponse.json({

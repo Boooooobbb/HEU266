@@ -1,43 +1,57 @@
 import { create } from 'zustand';
-import type { ChatMessage } from '@/types';
+import type { IceReply, IceBreakingRound, IceBreakingState } from '@/types';
 
-interface ChatState {
-  currentMatchId: string | null;
-  messages: ChatMessage[];
-  unreadCount: number;
+interface ChatState extends IceBreakingState {
   isLoading: boolean;
-  hasMore: boolean;
+  error: string | null;
 
-  setCurrentMatchId: (matchId: string | null) => void;
-  setMessages: (messages: ChatMessage[]) => void;
-  addMessage: (message: ChatMessage) => void;
-  setUnreadCount: (count: number) => void;
+  // Actions
+  setMatchId: (matchId: string) => void;
+  setCurrentRound: (round: IceBreakingRound) => void;
+  setMyReply: (round: number, replyId: string) => void;
+  setPartnerReply: (round: number, reply: IceReply) => void;
+  setPartnerConfirmed: (confirmed: boolean) => void;
+  setIConfirmed: (confirmed: boolean) => void;
+  setConnected: (connected: boolean) => void;
   setIsLoading: (loading: boolean) => void;
-  setHasMore: (hasMore: boolean) => void;
-  clearChat: () => void;
+  setError: (error: string | null) => void;
+  reset: () => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  currentMatchId: null,
-  messages: [],
-  unreadCount: 0,
-  isLoading: false,
-  hasMore: true,
+const initialState: IceBreakingState = {
+  matchId: '',
+  currentRound: 1,
+  myReplies: {},
+  partnerReplies: {},
+  partnerConfirmed: false,
+  iConfirmed: false,
+  connected: false,
+};
 
-  setCurrentMatchId: (matchId) => set({ currentMatchId: matchId }),
-  setMessages: (messages) => set({ messages }),
-  addMessage: (message) =>
+export const useChatStore = create<ChatState>((set) => ({
+  ...initialState,
+  isLoading: false,
+  error: null,
+
+  setMatchId: (matchId) => set({ matchId }),
+  setCurrentRound: (round) => set({ currentRound: round }),
+  setMyReply: (round, replyId) =>
     set((state) => ({
-      messages: [...state.messages, message],
+      myReplies: { ...state.myReplies, [round]: replyId },
     })),
-  setUnreadCount: (count) => set({ unreadCount: count }),
+  setPartnerReply: (round, reply) =>
+    set((state) => ({
+      partnerReplies: { ...state.partnerReplies, [round]: reply },
+    })),
+  setPartnerConfirmed: (confirmed) => set({ partnerConfirmed: confirmed }),
+  setIConfirmed: (confirmed) => set({ iConfirmed: confirmed }),
+  setConnected: (connected) => set({ connected }),
   setIsLoading: (loading) => set({ isLoading: loading }),
-  setHasMore: (hasMore) => set({ hasMore }),
-  clearChat: () =>
+  setError: (error) => set({ error }),
+  reset: () =>
     set({
-      currentMatchId: null,
-      messages: [],
-      unreadCount: 0,
-      hasMore: true,
+      ...initialState,
+      isLoading: false,
+      error: null,
     }),
 }));

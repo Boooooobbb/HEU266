@@ -387,7 +387,7 @@ const MatchReportPage: React.FC = () => {
           onClick={() => navigate('/chat')}
           className="w-full max-w-md py-5 bg-gradient-to-tr from-primary to-primary-container text-white text-lg font-bold rounded-full shadow-[0_8px_32px_rgba(148,74,0,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
         >
-          开启 72 小时限时聊天
+          开启破冰之旅
         </button>
       </section>
 
