@@ -5,7 +5,11 @@ import { useQuestionnaireStore } from '@/store';
 import { useQuestionnaireAutoSave } from '@/hooks/useQuestionnaireAutoSave';
 import { useIncompleteQuestionPrompt } from '@/hooks/useIncompleteQuestionPrompt';
 import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopProgress';
-import { calculateModule3Progress, calculateTotalProgress } from '@/utils/questionnaireProgress';
+import {
+  calculateModule3Progress,
+  calculateTotalProgress,
+  isQuestionnaireAnswerComplete,
+} from '@/utils/questionnaireProgress';
 
 const modules = [
   { id: 1, name: '基础画像', icon: 'person', path: '/questionnaire/1' },
@@ -97,22 +101,21 @@ const QuestionnaireModule3: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const nextModule = async () => {
-    // 找到第一个未完成的题目（需要 preference 选项选择后才算完成）
-    const questions = [
-      { id: 'q1', completed: formData.q1Preference !== '' },
-      { id: 'q2', completed: formData.q2Preference !== '' },
-      { id: 'q3', completed: formData.q3Preference !== '' },
-      { id: 'q4', completed: formData.q4Preference !== '' },
-      { id: 'q5', completed: formData.q5Preference !== '' },
-      { id: 'q6', completed: formData.q6Preference !== '' },
-      { id: 'q7', completed: formData.q7Preference !== '' },
-      { id: 'q8', completed: formData.q8Preference !== '' },
-      { id: 'q9', completed: formData.q9Preference !== '' },
-      { id: 'q10', completed: formData.q10Preference !== '' },
-    ];
+  const requiredQuestions = [
+    { id: 'q1-preference', completed: isQuestionnaireAnswerComplete(formData.q1Preference) },
+    { id: 'q2-preference', completed: isQuestionnaireAnswerComplete(formData.q2Preference) },
+    { id: 'q3-preference', completed: isQuestionnaireAnswerComplete(formData.q3Preference) },
+    { id: 'q4-preference', completed: isQuestionnaireAnswerComplete(formData.q4Preference) },
+    { id: 'q5-preference', completed: isQuestionnaireAnswerComplete(formData.q5Preference) },
+    { id: 'q6-preference', completed: isQuestionnaireAnswerComplete(formData.q6Preference) },
+    { id: 'q7-preference', completed: isQuestionnaireAnswerComplete(formData.q7Preference) },
+    { id: 'q8-preference', completed: isQuestionnaireAnswerComplete(formData.q8Preference) },
+    { id: 'q9-preference', completed: isQuestionnaireAnswerComplete(formData.q9Preference) },
+    { id: 'q10-preference', completed: isQuestionnaireAnswerComplete(formData.q10Preference) },
+  ];
 
-    if (focusFirstIncomplete(questions)) {
+  const nextModule = async () => {
+    if (focusFirstIncomplete(requiredQuestions)) {
       return;
     }
 
@@ -124,20 +127,7 @@ const QuestionnaireModule3: React.FC = () => {
 
   const handleModuleNavigate = (nextModuleId: number) => {
     if (nextModuleId > currentModule) {
-      const questions = [
-        { id: 'q1', completed: formData.q1Preference !== '' },
-        { id: 'q2', completed: formData.q2Preference !== '' },
-        { id: 'q3', completed: formData.q3Preference !== '' },
-        { id: 'q4', completed: formData.q4Preference !== '' },
-        { id: 'q5', completed: formData.q5Preference !== '' },
-        { id: 'q6', completed: formData.q6Preference !== '' },
-        { id: 'q7', completed: formData.q7Preference !== '' },
-        { id: 'q8', completed: formData.q8Preference !== '' },
-        { id: 'q9', completed: formData.q9Preference !== '' },
-        { id: 'q10', completed: formData.q10Preference !== '' },
-      ];
-
-      if (focusFirstIncomplete(questions)) {
+      if (focusFirstIncomplete(requiredQuestions)) {
         return;
       }
     }
@@ -464,7 +454,12 @@ const QuestionnaireModule3: React.FC = () => {
             )}
 
             {/* Preference Cards */}
-            <div className="space-y-3">
+            <div id={`q${q.id}-preference`} className="space-y-3 relative">
+              {incompleteHintId === `q${q.id}-preference` && (
+                <div className="absolute -right-2 top-0 bg-red-500 text-white text-xs px-2 py-1 rounded-lg">
+                  请选择一项
+                </div>
+              )}
               <p className="text-xs font-bold text-on-surface-variant/40 tracking-widest uppercase mb-4">希望对方与你：</p>
               {renderPreferenceCards(
                 q.prefKey as string,

@@ -6,7 +6,11 @@ import { joinMatching } from '@/services/matchingService';
 import { useQuestionnaireAutoSave } from '@/hooks/useQuestionnaireAutoSave';
 import { useIncompleteQuestionPrompt } from '@/hooks/useIncompleteQuestionPrompt';
 import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopProgress';
-import { calculateModule5Progress, calculateTotalProgress } from '@/utils/questionnaireProgress';
+import {
+  calculateModule5Progress,
+  calculateTotalProgress,
+  isQuestionnaireAnswerComplete,
+} from '@/utils/questionnaireProgress';
 
 const modules = [
   { id: 1, name: '基础画像', icon: 'person', path: '/questionnaire/1' },
@@ -223,13 +227,13 @@ const QuestionnaireModule5: React.FC = () => {
   const handleCompleteAndMatch = async () => {
     // 找到第一个未完成的题目
     const requiredQuestions = [
-      { id: 'q1', completed: formData.q1 !== '' },
-      { id: 'q2', completed: formData.q2.length > 0 },
-      { id: 'q3', completed: formData.q3 !== '' },
-      { id: 'q4', completed: formData.q4 !== '' },
-      { id: 'q5', completed: formData.q5 !== '' },
-      { id: 'q6', completed: formData.q6 !== '' },
-      { id: 'q7', completed: formData.q7.length > 0 },
+      { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.q1) },
+      { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.q2) },
+      { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.q3) },
+      { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.q4) },
+      { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.q5) },
+      { id: 'q6', completed: isQuestionnaireAnswerComplete(formData.q6) },
+      { id: 'q7', completed: isQuestionnaireAnswerComplete(formData.q7) },
     ];
 
     if (focusFirstIncomplete(requiredQuestions)) {

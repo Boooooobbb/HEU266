@@ -5,7 +5,11 @@ import { useQuestionnaireStore } from '@/store';
 import { useQuestionnaireAutoSave } from '@/hooks/useQuestionnaireAutoSave';
 import { useIncompleteQuestionPrompt } from '@/hooks/useIncompleteQuestionPrompt';
 import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopProgress';
-import { calculateModule2Progress, calculateTotalProgress } from '@/utils/questionnaireProgress';
+import {
+  calculateModule2Progress,
+  calculateTotalProgress,
+  isQuestionnaireAnswerComplete,
+} from '@/utils/questionnaireProgress';
 
 const modules = [
   { id: 1, name: '基础画像', icon: 'person', path: '/questionnaire/1' },
@@ -77,17 +81,31 @@ const QuestionnaireModule2: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const nextModule = async () => {
-    // 找到第一个未完成的题目（每个大题需要两个子问题都完成）
-    const questions = [
-      { id: 'q1', completed: formData.q1Schedule !== '' && formData.q1Attitude !== '' },
-      { id: 'q2', completed: formData.q2Space !== '' && formData.q2Tolerance !== '' },
-      { id: 'q3', completed: formData.q3Frequency !== '' && formData.q3Bottomline !== '' },
-      { id: 'q4', completed: formData.q4Smoking !== '' && formData.q4Bottomline !== '' },
-      { id: 'q5', completed: formData.q5Alcohol !== '' && formData.q5Bottomline !== '' },
-    ];
+  const requiredQuestions = [
+    {
+      id: 'q1',
+      completed: isQuestionnaireAnswerComplete(formData.q1Schedule) && isQuestionnaireAnswerComplete(formData.q1Attitude),
+    },
+    {
+      id: 'q2',
+      completed: isQuestionnaireAnswerComplete(formData.q2Space) && isQuestionnaireAnswerComplete(formData.q2Tolerance),
+    },
+    {
+      id: 'q3',
+      completed: isQuestionnaireAnswerComplete(formData.q3Frequency) && isQuestionnaireAnswerComplete(formData.q3Bottomline),
+    },
+    {
+      id: 'q4',
+      completed: isQuestionnaireAnswerComplete(formData.q4Smoking) && isQuestionnaireAnswerComplete(formData.q4Bottomline),
+    },
+    {
+      id: 'q5',
+      completed: isQuestionnaireAnswerComplete(formData.q5Alcohol) && isQuestionnaireAnswerComplete(formData.q5Bottomline),
+    },
+  ];
 
-    if (focusFirstIncomplete(questions)) {
+  const nextModule = async () => {
+    if (focusFirstIncomplete(requiredQuestions)) {
       return;
     }
 
@@ -99,15 +117,7 @@ const QuestionnaireModule2: React.FC = () => {
 
   const handleModuleNavigate = (nextModuleId: number) => {
     if (nextModuleId > currentModule) {
-      const questions = [
-        { id: 'q1', completed: formData.q1Schedule !== '' && formData.q1Attitude !== '' },
-        { id: 'q2', completed: formData.q2Space !== '' && formData.q2Tolerance !== '' },
-        { id: 'q3', completed: formData.q3Frequency !== '' && formData.q3Bottomline !== '' },
-        { id: 'q4', completed: formData.q4Smoking !== '' && formData.q4Bottomline !== '' },
-        { id: 'q5', completed: formData.q5Alcohol !== '' && formData.q5Bottomline !== '' },
-      ];
-
-      if (focusFirstIncomplete(questions)) {
+      if (focusFirstIncomplete(requiredQuestions)) {
         return;
       }
     }

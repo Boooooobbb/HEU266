@@ -5,7 +5,11 @@ import { useQuestionnaireStore } from '@/store';
 import { useQuestionnaireAutoSave } from '@/hooks/useQuestionnaireAutoSave';
 import { useIncompleteQuestionPrompt } from '@/hooks/useIncompleteQuestionPrompt';
 import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopProgress';
-import { calculateModule1Progress, calculateTotalProgress } from '@/utils/questionnaireProgress';
+import {
+  calculateModule1Progress,
+  calculateTotalProgress,
+  isQuestionnaireAnswerComplete,
+} from '@/utils/questionnaireProgress';
 
 const modules = [
   { id: 1, name: '基础画像', icon: 'person', path: '/questionnaire/1' },
@@ -96,17 +100,16 @@ const QuestionnairePage: React.FC = () => {
     }));
   };
 
-  const nextModule = async () => {
-    // 找到第一个未完成的题目
-    const questions = [
-      { id: 'q1', completed: formData.gender !== '' },
-      { id: 'q2', completed: formData.expectedGender !== '' },
-      { id: 'q3', completed: formData.stage !== '' },
-      { id: 'q4', completed: formData.partnerStages.length > 0 },
-      { id: 'q5', completed: formData.locations.length > 0 },
-    ];
+  const requiredQuestions = [
+    { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.gender) },
+    { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.expectedGender) },
+    { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.stage) },
+    { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.partnerStages) },
+    { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.locations) },
+  ];
 
-    if (focusFirstIncomplete(questions)) {
+  const nextModule = async () => {
+    if (focusFirstIncomplete(requiredQuestions)) {
       return;
     }
 
@@ -119,15 +122,7 @@ const QuestionnairePage: React.FC = () => {
 
   const handleModuleNavigate = (nextModuleId: number) => {
     if (nextModuleId > currentModule) {
-      const questions = [
-        { id: 'q1', completed: formData.gender !== '' },
-        { id: 'q2', completed: formData.expectedGender !== '' },
-        { id: 'q3', completed: formData.stage !== '' },
-        { id: 'q4', completed: formData.partnerStages.length > 0 },
-        { id: 'q5', completed: formData.locations.length > 0 },
-      ];
-
-      if (focusFirstIncomplete(questions)) {
+      if (focusFirstIncomplete(requiredQuestions)) {
         return;
       }
     }

@@ -5,7 +5,11 @@ import { useQuestionnaireStore } from '@/store';
 import { useQuestionnaireAutoSave } from '@/hooks/useQuestionnaireAutoSave';
 import { useIncompleteQuestionPrompt } from '@/hooks/useIncompleteQuestionPrompt';
 import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopProgress';
-import { calculateModule4Progress, calculateTotalProgress } from '@/utils/questionnaireProgress';
+import {
+  calculateModule4Progress,
+  calculateTotalProgress,
+  isQuestionnaireAnswerComplete,
+} from '@/utils/questionnaireProgress';
 
 const modules = [
   { id: 1, name: '基础画像', icon: 'person', path: '/questionnaire/1' },
@@ -69,18 +73,17 @@ const QuestionnaireModule4: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const nextModule = async () => {
-    // 找到第一个未完成的题目
-    const questions = [
-      { id: 'q1', completed: formData.q1 !== '' },
-      { id: 'q2', completed: formData.q2 !== '' },
-      { id: 'q3', completed: formData.q3 !== '' },
-      { id: 'q4', completed: formData.q4 !== '' },
-      { id: 'q5', completed: formData.q5 !== '' },
-      { id: 'q6', completed: formData.q6 !== '' },
-    ];
+  const requiredQuestions = [
+    { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.q1) },
+    { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.q2) },
+    { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.q3) },
+    { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.q4) },
+    { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.q5) },
+    { id: 'q6', completed: isQuestionnaireAnswerComplete(formData.q6) },
+  ];
 
-    if (focusFirstIncomplete(questions)) {
+  const nextModule = async () => {
+    if (focusFirstIncomplete(requiredQuestions)) {
       return;
     }
 
@@ -92,16 +95,7 @@ const QuestionnaireModule4: React.FC = () => {
 
   const handleModuleNavigate = (nextModuleId: number) => {
     if (nextModuleId > currentModule) {
-      const questions = [
-        { id: 'q1', completed: formData.q1 !== '' },
-        { id: 'q2', completed: formData.q2 !== '' },
-        { id: 'q3', completed: formData.q3 !== '' },
-        { id: 'q4', completed: formData.q4 !== '' },
-        { id: 'q5', completed: formData.q5 !== '' },
-        { id: 'q6', completed: formData.q6 !== '' },
-      ];
-
-      if (focusFirstIncomplete(questions)) {
+      if (focusFirstIncomplete(requiredQuestions)) {
         return;
       }
     }

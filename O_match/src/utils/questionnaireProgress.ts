@@ -10,6 +10,20 @@ export interface ModuleProgress {
 
 export const QUESTIONNAIRE_TOTAL_QUESTIONS = 33;
 
+/**
+ * 判断问卷答案在运行时是否真的已填写。
+ *
+ * Supabase 或旧版本缓存可能返回 null/undefined；不能只用 `value !== ''`
+ * 判断，否则界面没有选中任何选项时仍会被当作已完成。
+ */
+export const isQuestionnaireAnswerComplete = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return typeof value === 'string' && value.trim().length > 0;
+};
+
 export const calculateModule1Progress = (
   module1: QuestionnaireAnswer['module1'] | null | undefined
 ): number => {
@@ -17,20 +31,20 @@ export const calculateModule1Progress = (
     module1?.gender,
     module1?.expectedGender,
     module1?.stage,
-    module1?.partnerStages?.length ? 'done' : '',
-    module1?.locations?.length ? 'done' : '',
-  ].filter(Boolean).length;
+    module1?.partnerStages,
+    module1?.locations,
+  ].filter(isQuestionnaireAnswerComplete).length;
 };
 
 export const calculateModule2Progress = (
   module2: QuestionnaireAnswer['module2'] | null | undefined
 ): number => {
   return [
-    module2?.q1Schedule && module2?.q1Attitude,
-    module2?.q2Space && module2?.q2Tolerance,
-    module2?.q3Frequency && module2?.q3Bottomline,
-    module2?.q4Smoking && module2?.q4Bottomline,
-    module2?.q5Alcohol && module2?.q5Bottomline,
+    isQuestionnaireAnswerComplete(module2?.q1Schedule) && isQuestionnaireAnswerComplete(module2?.q1Attitude),
+    isQuestionnaireAnswerComplete(module2?.q2Space) && isQuestionnaireAnswerComplete(module2?.q2Tolerance),
+    isQuestionnaireAnswerComplete(module2?.q3Frequency) && isQuestionnaireAnswerComplete(module2?.q3Bottomline),
+    isQuestionnaireAnswerComplete(module2?.q4Smoking) && isQuestionnaireAnswerComplete(module2?.q4Bottomline),
+    isQuestionnaireAnswerComplete(module2?.q5Alcohol) && isQuestionnaireAnswerComplete(module2?.q5Bottomline),
   ].filter(Boolean).length;
 };
 
@@ -48,7 +62,7 @@ export const calculateModule3Progress = (
     module3?.q8Preference,
     module3?.q9Preference,
     module3?.q10Preference,
-  ].filter(Boolean).length;
+  ].filter(isQuestionnaireAnswerComplete).length;
 };
 
 export const calculateModule4Progress = (
@@ -61,7 +75,7 @@ export const calculateModule4Progress = (
     module4?.q4,
     module4?.q5,
     module4?.q6,
-  ].filter(Boolean).length;
+  ].filter(isQuestionnaireAnswerComplete).length;
 };
 
 export const calculateModule5Progress = (
@@ -69,13 +83,13 @@ export const calculateModule5Progress = (
 ): number => {
   return [
     module5?.q1,
-    module5?.q2?.length ? 'done' : '',
+    module5?.q2,
     module5?.q3,
     module5?.q4,
     module5?.q5,
     module5?.q6,
-    module5?.q7?.length ? 'done' : '',
-  ].filter(Boolean).length;
+    module5?.q7,
+  ].filter(isQuestionnaireAnswerComplete).length;
 };
 
 export const calculateModuleProgress = (
