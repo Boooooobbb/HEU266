@@ -13,6 +13,7 @@
  */
 
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
+import { useQuestionnaireStore } from '@/store/questionnaire';
 import { QUESTIONNAIRE_TOTAL_QUESTIONS } from '@/utils/questionnaireProgress';
 
 const STORAGE_KEY_PREFIX = 'stitch_o_match_questionnaire';
@@ -128,6 +129,7 @@ export const resetQuestionnaireSessionCache = (): void => {
   questionnaireCacheKey = null;
   remoteCacheUserId = null;
   resetRemoteSessionState();
+  useQuestionnaireStore.getState().resetQuestionnaire();
 };
 
 const resetRemoteSessionState = () => {

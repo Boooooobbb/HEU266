@@ -1,32 +1,30 @@
 import { create } from 'zustand';
+import type { ModuleProgress } from '@/utils/questionnaireProgress';
+
+const createEmptyModuleProgress = (): ModuleProgress => ({
+  module1: 0,
+  module2: 0,
+  module3: 0,
+  module4: 0,
+  module5: 0,
+});
 
 interface QuestionnaireState {
   currentModule: number;
   // 存储每个模块的完成状态
-  moduleProgress: {
-    module1: number; // 0-6
-    module2: number; // 0-5
-    module3: number; // 0-10
-    module4: number; // 0-6
-    module5: number; // 0-7
-  };
+  moduleProgress: ModuleProgress;
   isSubmitting: boolean;
 
   setCurrentModule: (module: number) => void;
   setModuleProgress: (module: number, progress: number) => void;
+  setModuleProgressSnapshot: (progress: ModuleProgress) => void;
   setIsSubmitting: (submitting: boolean) => void;
   resetQuestionnaire: () => void;
 }
 
 export const useQuestionnaireStore = create<QuestionnaireState>((set) => ({
   currentModule: 1,
-  moduleProgress: {
-    module1: 0,
-    module2: 0,
-    module3: 0,
-    module4: 0,
-    module5: 0,
-  },
+  moduleProgress: createEmptyModuleProgress(),
   isSubmitting: false,
 
   setCurrentModule: (module) => set({ currentModule: module }),
@@ -37,17 +35,13 @@ export const useQuestionnaireStore = create<QuestionnaireState>((set) => ({
         [`module${module}`]: progress,
       },
     })),
+  setModuleProgressSnapshot: (moduleProgress) =>
+    set({ moduleProgress: { ...moduleProgress } }),
   setIsSubmitting: (isSubmitting) => set({ isSubmitting }),
   resetQuestionnaire: () =>
     set({
       currentModule: 1,
-      moduleProgress: {
-        module1: 0,
-        module2: 0,
-        module3: 0,
-        module4: 0,
-        module5: 0,
-      },
+      moduleProgress: createEmptyModuleProgress(),
       isSubmitting: false,
     }),
 }));

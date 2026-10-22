@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { useParams, Navigate, useLocation } from 'react-router-dom';
 import QuestionnaireModule1 from './QuestionnaireModule1';
 import QuestionnaireModule2 from './QuestionnaireModule2';
@@ -14,22 +14,14 @@ const QuestionnairePage: React.FC = () => {
   const { moduleId } = useParams();
   const location = useLocation();
   const currentModule = moduleId ? parseInt(moduleId) : 1;
-  const { setModuleProgress } = useQuestionnaireStore();
+  const setModuleProgressSnapshot = useQuestionnaireStore((state) => state.setModuleProgressSnapshot);
 
   const localSnapshot = getQuestionnaireSnapshot();
 
-  useEffect(() => {
-    if (!localSnapshot) {
-      return;
-    }
-
-    const progress = calculateModuleProgress(localSnapshot);
-    setModuleProgress(1, progress.module1);
-    setModuleProgress(2, progress.module2);
-    setModuleProgress(3, progress.module3);
-    setModuleProgress(4, progress.module4);
-    setModuleProgress(5, progress.module5);
-  }, [localSnapshot, setModuleProgress]);
+  // 在浏览器绘制前同步本地进度；没有数据时也必须归零，避免沿用上一位用户的状态。
+  useLayoutEffect(() => {
+    setModuleProgressSnapshot(calculateModuleProgress(localSnapshot));
+  }, [localSnapshot, setModuleProgressSnapshot]);
 
   // 路由变化时滚动到顶部
   useEffect(() => {
@@ -41,16 +33,12 @@ const QuestionnairePage: React.FC = () => {
 
     const hydrateProgress = async () => {
       const saved = await loadQuestionnaire();
-      if (cancelled || !saved) {
+      if (cancelled) {
         return;
       }
 
-      const progress = calculateModuleProgress(saved);
-      setModuleProgress(1, progress.module1);
-      setModuleProgress(2, progress.module2);
-      setModuleProgress(3, progress.module3);
-      setModuleProgress(4, progress.module4);
-      setModuleProgress(5, progress.module5);
+      // 远端同样可能没有问卷记录，此时应覆盖为全零进度。
+      setModuleProgressSnapshot(calculateModuleProgress(saved));
     };
 
     void hydrateProgress();
@@ -58,7 +46,7 @@ const QuestionnairePage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [setModuleProgress]);
+  }, [setModuleProgressSnapshot]);
 
   // 根据模块ID渲染对应的问卷组件
   switch (currentModule) {
