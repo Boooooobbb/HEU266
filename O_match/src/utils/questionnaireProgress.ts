@@ -18,6 +18,11 @@ export const MODULE_MAX_PROGRESS = {
   module5: 7,
 } as const;
 
+export const MODULE5_MULTI_SELECT_VALUES = {
+  q2: ['words', 'time', 'gift', 'service', 'touch'],
+  q7: ['belonging', 'growth', 'relax', 'passion'],
+} as const;
+
 export const resolveQuestionnaireModulePath = (
   data: QuestionnaireAnswer | null | undefined
 ): string => {
@@ -45,6 +50,31 @@ export const isQuestionnaireAnswerComplete = (value: unknown): boolean => {
   }
 
   return typeof value === 'string' && value.trim().length > 0;
+};
+
+export const filterValidQuestionnaireSelections = (
+  value: unknown,
+  allowedValues: readonly string[]
+): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(
+    (selection): selection is string =>
+      typeof selection === 'string' && allowedValues.includes(selection)
+  );
+};
+
+export const isQuestionnaireMultiSelectComplete = (
+  value: unknown,
+  allowedValues: readonly string[]
+): boolean => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return false;
+  }
+
+  return filterValidQuestionnaireSelections(value, allowedValues).length === value.length;
 };
 
 export const calculateModule1Progress = (
@@ -106,14 +136,14 @@ export const calculateModule5Progress = (
   module5: QuestionnaireAnswer['module5'] | null | undefined
 ): number => {
   return [
-    module5?.q1,
-    module5?.q2,
-    module5?.q3,
-    module5?.q4,
-    module5?.q5,
-    module5?.q6,
-    module5?.q7,
-  ].filter(isQuestionnaireAnswerComplete).length;
+    isQuestionnaireAnswerComplete(module5?.q1),
+    isQuestionnaireMultiSelectComplete(module5?.q2, MODULE5_MULTI_SELECT_VALUES.q2),
+    isQuestionnaireAnswerComplete(module5?.q3),
+    isQuestionnaireAnswerComplete(module5?.q4),
+    isQuestionnaireAnswerComplete(module5?.q5),
+    isQuestionnaireAnswerComplete(module5?.q6),
+    isQuestionnaireMultiSelectComplete(module5?.q7, MODULE5_MULTI_SELECT_VALUES.q7),
+  ].filter(Boolean).length;
 };
 
 export const calculateModuleProgress = (

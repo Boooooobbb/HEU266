@@ -9,8 +9,11 @@ import { QuestionnaireTopProgress } from '@/components/common/QuestionnaireTopPr
 import {
   calculateModule5Progress,
   calculateTotalProgress,
+  filterValidQuestionnaireSelections,
   isQuestionnaireAnswerComplete,
+  isQuestionnaireMultiSelectComplete,
   MODULE_MAX_PROGRESS,
+  MODULE5_MULTI_SELECT_VALUES,
 } from '@/utils/questionnaireProgress';
 
 const modules = [
@@ -59,6 +62,23 @@ const QuestionnaireModule5: React.FC = () => {
 
   const { incompleteHintId, focusFirstIncomplete } = useIncompleteQuestionPrompt();
 
+  // 旧版本曾使用过其他多选值。先移除当前页面无法显示的历史值，
+  // 避免“看起来没选，但数组非空”的答案被误判为已完成。
+  React.useEffect(() => {
+    if (!isHydrated) return;
+
+    setFormData((prev) => {
+      const q2 = filterValidQuestionnaireSelections(prev.q2, MODULE5_MULTI_SELECT_VALUES.q2);
+      const q7 = filterValidQuestionnaireSelections(prev.q7, MODULE5_MULTI_SELECT_VALUES.q7);
+
+      if (q2.length === prev.q2.length && q7.length === prev.q7.length) {
+        return prev;
+      }
+
+      return { ...prev, q2, q7 };
+    });
+  }, [isHydrated, setFormData]);
+
   // 计算当前模块已完成题目数
   const currentModuleProgress = calculateModule5Progress(formData);
 
@@ -77,12 +97,12 @@ const QuestionnaireModule5: React.FC = () => {
     hasScrolledRef.current = true;
     const questions = [
       { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.q1) },
-      { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.q2) },
+      { id: 'q2', completed: isQuestionnaireMultiSelectComplete(formData.q2, MODULE5_MULTI_SELECT_VALUES.q2) },
       { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.q3) },
       { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.q4) },
       { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.q5) },
       { id: 'q6', completed: isQuestionnaireAnswerComplete(formData.q6) },
-      { id: 'q7', completed: isQuestionnaireAnswerComplete(formData.q7) },
+      { id: 'q7', completed: isQuestionnaireMultiSelectComplete(formData.q7, MODULE5_MULTI_SELECT_VALUES.q7) },
     ];
     requestAnimationFrame(() => focusFirstIncomplete(questions));
   }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -259,12 +279,12 @@ const QuestionnaireModule5: React.FC = () => {
     // 找到第一个未完成的题目
     const requiredQuestions = [
       { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.q1) },
-      { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.q2) },
+      { id: 'q2', completed: isQuestionnaireMultiSelectComplete(formData.q2, MODULE5_MULTI_SELECT_VALUES.q2) },
       { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.q3) },
       { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.q4) },
       { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.q5) },
       { id: 'q6', completed: isQuestionnaireAnswerComplete(formData.q6) },
-      { id: 'q7', completed: isQuestionnaireAnswerComplete(formData.q7) },
+      { id: 'q7', completed: isQuestionnaireMultiSelectComplete(formData.q7, MODULE5_MULTI_SELECT_VALUES.q7) },
     ];
 
     if (focusFirstIncomplete(requiredQuestions)) {

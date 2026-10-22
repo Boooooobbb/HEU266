@@ -14,7 +14,11 @@
 
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 import { useQuestionnaireStore } from '@/store/questionnaire';
-import { QUESTIONNAIRE_TOTAL_QUESTIONS } from '@/utils/questionnaireProgress';
+import {
+  calculateModule5Progress,
+  MODULE_MAX_PROGRESS,
+  QUESTIONNAIRE_TOTAL_QUESTIONS,
+} from '@/utils/questionnaireProgress';
 
 // v2 intentionally starts with a clean, user-scoped cache. The previous key
 // could be populated by the legacy global cache and then incorrectly assigned
@@ -346,16 +350,7 @@ const isModule4Complete = (module4: QuestionnaireAnswer['module4']): boolean =>
   );
 
 const isModule5Complete = (module5: QuestionnaireAnswer['module5']): boolean =>
-  Boolean(
-    module5 &&
-    module5.q1 &&
-    module5.q2?.length &&
-    module5.q3 &&
-    module5.q4 &&
-    module5.q5 &&
-    module5.q6 &&
-    module5.q7?.length
-  );
+  calculateModule5Progress(module5) === MODULE_MAX_PROGRESS.module5;
 
 export const hasSubmittedQuestionnaire = (): boolean => {
   try {
