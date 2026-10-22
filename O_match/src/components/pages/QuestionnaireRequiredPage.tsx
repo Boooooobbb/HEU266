@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const QuestionnaireRequiredPage: React.FC = () => {
   return (
     <main className="pt-24 pb-24 px-4 max-w-3xl mx-auto min-h-[70vh] flex items-center">
-      <section className="w-full glass-card ghost-border rounded-[2rem] p-8 md:p-12 text-center shadow-[0_8px_32px_rgba(28,28,24,0.06)]">
+      <section className="w-full glass-card rounded-[2rem] p-8 md:p-12 text-center shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)]">
         <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-orange-100 flex items-center justify-center">
           <span className="material-symbols-outlined text-3xl text-orange-700" style={{ fontVariationSettings: "'FILL' 1" }}>
             assignment
@@ -19,15 +19,9 @@ const QuestionnaireRequiredPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             to="/questionnaire/1"
-            className="px-6 py-3 rounded-full bg-primary text-white font-bold hover:opacity-90 transition-opacity"
+            className="sunset-gradient text-white font-bold py-5 px-8 rounded-full shadow-lg shadow-orange-700/10 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2"
           >
-            去完成问卷
-          </Link>
-          <Link
-            to="/"
-            className="px-6 py-3 rounded-full bg-surface-container-high text-on-surface font-bold hover:bg-surface-container-low transition-colors"
-          >
-            返回首页
+            继续完成问卷
           </Link>
         </div>
       </section>

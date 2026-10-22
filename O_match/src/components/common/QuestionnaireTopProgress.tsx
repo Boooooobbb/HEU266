@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/utils';
 import { QuestionnaireSaveStatus } from './QuestionnaireSaveStatus';
+import { QUESTIONNAIRE_TOTAL_QUESTIONS } from '@/utils/questionnaireProgress';
 import type { QuestionnaireSaveState } from '@/hooks/useQuestionnaireAutoSave';
 
 interface QuestionnaireModuleNavItem {
@@ -34,13 +35,13 @@ export const QuestionnaireTopProgress: React.FC<QuestionnaireTopProgressProps> =
         <div className="w-full">
           <div className="flex justify-between items-end mb-2">
             <span className="text-on-surface-variant text-sm font-semibold">问卷完成度</span>
-            <span className="text-primary font-bold">{totalProgress}/33</span>
+            <span className="text-primary font-bold">{totalProgress}/{QUESTIONNAIRE_TOTAL_QUESTIONS}</span>
           </div>
           <QuestionnaireSaveStatus saveState={saveState} lastSavedAt={lastSavedAt} />
           <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
             <div
               className="h-full bg-primary-container rounded-full shadow-[0_0_8px_rgba(246,138,47,0.4)] transition-[width] duration-500 ease-out"
-              style={{ width: `${(totalProgress / 33) * 100}%` }}
+              style={{ width: `${(totalProgress / QUESTIONNAIRE_TOTAL_QUESTIONS) * 100}%` }}
             />
           </div>
         </div>

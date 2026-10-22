@@ -9,6 +9,7 @@ import {
   calculateModule1Progress,
   calculateTotalProgress,
   isQuestionnaireAnswerComplete,
+  MODULE_MAX_PROGRESS,
 } from '@/utils/questionnaireProgress';
 
 const modules = [
@@ -22,6 +23,18 @@ const modules = [
 const locations = [
   '启航活动中心', '图书馆', '船海楼', '11号楼', '21号楼',
   '31号楼', '41号楼', '61号楼', '南体', '北体', '军工操场', '体育馆', '宿舍', '各大食堂'
+];
+
+const interests = [
+  '跳舞💃', '篮球🏀', '足球⚽', '羽毛球🏸', '乒乓球🏓', '跑步🏃',
+  '健身💪', '游泳🏊', '瑜伽🧘', '骑行🚴', '滑雪🎿', '滑冰⛸️',
+  '摄影📷', '绘画🎨', '音乐🎵', '吉他🎸', '钢琴🎹', '小提琴🎻',
+  '阅读📚', '写作✍️', '电影🎬', '动漫🎭', '游戏🎮', '编程💻',
+  '烹饪🍳', '烘焙🧁', '咖啡☕', '旅行✈️', '徒步🥾', '露营🏕️',
+  '滑板🛹', '桌游🎲', '象棋♟️', '剧本杀🔍', '密室逃脱🗝️', '手工✂️',
+  '养宠🐱', '种花🌻', '看展🏛️', '话剧🎭', '演唱会🎤', '追星🌟',
+  '汉服👘', '街舞🕺', '说唱🎙️', '架子鼓🥁', '二次元🌸', '书法🖌️',
+  '钓鱼🎣', '攀岩🧗',
 ];
 
 const QuestionnairePage: React.FC = () => {
@@ -45,6 +58,7 @@ const QuestionnairePage: React.FC = () => {
       stage: '',
       partnerStages: [] as string[],
       locations: [] as string[],
+      interests: [] as string[],
     },
   });
 
@@ -61,7 +75,24 @@ const QuestionnairePage: React.FC = () => {
     setModuleProgress(1, currentModuleProgress);
   }, [currentModuleProgress, isHydrated, setModuleProgress]);
 
-  // 计算总进度（33题）
+  // 首次加载时自动滚动到第一个未完成的题目
+  const hasScrolledRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isHydrated || hasScrolledRef.current) return;
+    hasScrolledRef.current = true;
+    const questions = [
+      { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.gender) },
+      { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.expectedGender) },
+      { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.stage) },
+      { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.partnerStages) },
+      { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.locations) },
+      { id: 'q6', completed: isQuestionnaireAnswerComplete(formData.interests) },
+    ];
+    // 延迟一帧确保 DOM 渲染完成
+    requestAnimationFrame(() => focusFirstIncomplete(questions));
+  }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 计算总进度（34题）
   const totalProgress = calculateTotalProgress(moduleProgress);
 
   const updateFormData = (field: string, value: any) => {
@@ -100,12 +131,22 @@ const QuestionnairePage: React.FC = () => {
     }));
   };
 
+  const handleInterestToggle = (interest: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter((i) => i !== interest)
+        : [...prev.interests, interest],
+    }));
+  };
+
   const requiredQuestions = [
     { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.gender) },
     { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.expectedGender) },
     { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.stage) },
     { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.partnerStages) },
     { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.locations) },
+    { id: 'q6', completed: isQuestionnaireAnswerComplete(formData.interests) },
   ];
 
   const nextModule = async () => {
@@ -121,8 +162,19 @@ const QuestionnairePage: React.FC = () => {
   };
 
   const handleModuleNavigate = (nextModuleId: number) => {
+    // 向前跳转：检查当前模块是否完成
     if (nextModuleId > currentModule) {
       if (focusFirstIncomplete(requiredQuestions)) {
+        return;
+      }
+    }
+
+    // 检查目标模块之前的所有模块是否都已完成
+    for (let m = 1; m < nextModuleId; m++) {
+      if (m === currentModule) continue;
+      const key = `module${m}` as keyof typeof MODULE_MAX_PROGRESS;
+      if (moduleProgress[key] < MODULE_MAX_PROGRESS[key]) {
+        navigate(`/questionnaire/${m}`);
         return;
       }
     }
@@ -456,6 +508,47 @@ const QuestionnairePage: React.FC = () => {
                   'hover:bg-orange-50 hover:text-primary'
                 )}>
                   {location}
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Q6: 兴趣爱好 */}
+        <div id="q6" className="space-y-4 relative">
+          {incompleteHintId === 'q6' && (
+            <div className="absolute -right-2 top-0 bg-red-500 text-white text-xs px-2 py-1 rounded-lg">
+              请完成此题
+            </div>
+          )}
+          <label className="text-xl font-bold text-on-surface flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-primary-container rounded-full"></span>
+            你的兴趣爱好是什么？
+          </label>
+          <p className="text-sm text-on-surface-variant">
+            选几个代表你灵魂的爱好，匹配算法会帮你找到同好。
+            {formData.interests.length > 0 && (
+              <span className="ml-2 text-primary font-bold">已选 {formData.interests.length} 项</span>
+            )}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {interests.map((interest) => (
+              <label key={interest} className="relative cursor-pointer group">
+                <input
+                  className="peer sr-only"
+                  name="interests"
+                  type="checkbox"
+                  checked={formData.interests.includes(interest)}
+                  onChange={() => handleInterestToggle(interest)}
+                />
+                <div className={cn(
+                  'px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant',
+                  'font-medium text-sm transition-all active:scale-95',
+                  'peer-checked:bg-gradient-to-br peer-checked:from-[#F28C38] peer-checked:to-[#F68A2F]',
+                  'peer-checked:text-white peer-checked:shadow-lg peer-checked:shadow-orange-900/15',
+                  'hover:bg-orange-50 hover:text-primary'
+                )}>
+                  {interest}
                 </div>
               </label>
             ))}

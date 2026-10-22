@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerWithEmailCode, sendRegisterEmailCode } from '@/services/authService';
+import { PASSWORD_RULE_MESSAGE, isValidPassword } from '@/utils/password';
 
 const HRBEU_EMAIL_MESSAGE = '仅支持 HEU 校园邮箱';
 const HRBEU_EMAIL_SUFFIX = '@hrbeu.edu.cn';
+const EMAIL_CODE_COOLDOWN_SECONDS = 30;
+
+const isRateLimitedError = (message?: string) =>
+  Boolean(message && (message.includes('过于频繁') || message.toLowerCase().includes('rate')));
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -63,16 +68,21 @@ const RegisterPage: React.FC = () => {
     }
 
     setSendingCode(true);
+    setCodeCooldown(EMAIL_CODE_COOLDOWN_SECONDS);
     try {
       const result = await sendRegisterEmailCode(buildHrbeuEmail(normalizedEmailPrefix));
       if (result.success) {
         setHint(result.message || '验证码已发送，请前往邮箱查收');
-        setCodeCooldown(60);
       } else {
-        setError(result.message || '验证码发送失败');
+        const message = result.message || '验证码发送失败';
+        setError(message);
+        if (!isRateLimitedError(message)) {
+          setCodeCooldown(0);
+        }
       }
     } catch {
       setError('验证码发送失败，请稍后重试');
+      setCodeCooldown(0);
     } finally {
       setSendingCode(false);
     }
@@ -100,8 +110,8 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('密码长度至少为6位');
+    if (!isValidPassword(password)) {
+      setError(PASSWORD_RULE_MESSAGE);
       return;
     }
 
@@ -148,7 +158,7 @@ const RegisterPage: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="w-full max-w-lg px-6 relative z-10 py-24">
-        <div className="glass-card ghost-border rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex flex-col items-center text-center">
+        <div className="glass-card rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] flex flex-col items-center text-center">
           {/* Header Section */}
           <div className="mb-10 w-full">
             <h1 className="text-3xl font-bold font-headline text-on-surface tracking-tight mb-2">注册账号</h1>
@@ -195,7 +205,7 @@ const RegisterPage: React.FC = () => {
                   onClick={handleSendCode}
                   disabled={sendingCode || codeCooldown > 0}
                 >
-                  {sendingCode ? '发送中...' : codeCooldown > 0 ? `${codeCooldown}s后重发` : '获取验证码'}
+                  {codeCooldown > 0 ? `${codeCooldown}s后重发` : sendingCode ? '发送中...' : '获取验证码'}
                 </button>
               </div>
             </div>
@@ -206,7 +216,7 @@ const RegisterPage: React.FC = () => {
               <div className="relative group">
                 <input
                   className="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 pr-20 text-on-surface placeholder:text-outline/40 focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 ghost-border"
-                  placeholder="••••••••"
+                  placeholder="密码"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -223,6 +233,7 @@ const RegisterPage: React.FC = () => {
                   </span>
                 </button>
               </div>
+              <p className="text-xs text-on-surface-variant ml-4">{PASSWORD_RULE_MESSAGE}</p>
             </div>
 
             {/* Confirm Password Field */}
@@ -231,7 +242,7 @@ const RegisterPage: React.FC = () => {
               <div className="relative group">
                 <input
                   className="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 pr-20 text-on-surface placeholder:text-outline/40 focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 ghost-border"
-                  placeholder="••••••••"
+                  placeholder="确认密码"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -272,7 +283,7 @@ const RegisterPage: React.FC = () => {
           {/* Bottom Guide */}
           <div className="pt-8 border-t border-orange-100/30 w-full mt-10">
             <p className="text-[12px] text-on-surface-variant/60 leading-relaxed mb-6">
-              注册即代表同意 <a className="text-primary hover:underline underline-offset-4" href="#">《服务条款》</a> 与 <a className="text-primary hover:underline underline-offset-4" href="#">《隐私政策》</a>
+              注册即代表同意 <Link className="text-primary hover:underline underline-offset-4" to="/terms">《服务条款》</Link> 与 <Link className="text-primary hover:underline underline-offset-4" to="/privacy">《隐私政策》</Link>
             </p>
             <p className="text-sm font-medium text-on-surface-variant">
               已有账号？<Link to="/login" className="text-secondary font-bold hover:opacity-80 transition-opacity ml-1">立即登录</Link>

@@ -20,3 +20,4 @@ export { default as QuestionnaireRequiredPage } from './QuestionnaireRequiredPag
 export { default as SecurityPage } from './SecurityPage';
 export { default as BindInfoPage } from './BindInfoPage';
 export { default as DonatePage } from './DonatePage';
+export { default as ContactMethodsPage } from './ContactMethodsPage';

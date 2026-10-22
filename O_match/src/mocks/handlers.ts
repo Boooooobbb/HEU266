@@ -1,5 +1,7 @@
 import { http, HttpResponse, delay } from 'msw';
 
+const LOCAL_CHAT_UNREAD_COUNT_KEY = 'stitch_o_match_chat_unread_count';
+
 // 模拟用户数据
 const mockUser = {
   id: 'user_001',
@@ -27,32 +29,29 @@ const mockMatch = {
   remainingTime: 72 * 3600,
 };
 
-const mockMessages = [
-  {
-    id: 'msg_001',
-    senderId: 'partner_001',
-    receiverId: 'user_001',
-    content: '嘿！我发现我们都常去图书馆二楼。你通常是坐在靠窗的那个位置吗？',
-    createdAt: '2024-01-21T10:24:00Z',
-    read: true,
-  },
-  {
-    id: 'msg_002',
-    senderId: 'user_001',
-    receiverId: 'partner_001',
-    content: '被发现了！😅 窗边的位置视野最好，学习累了看窗外特别解压。你现在在那儿吗？',
-    createdAt: '2024-01-21T10:28:00Z',
-    read: true,
-  },
-  {
-    id: 'msg_003',
-    senderId: 'partner_001',
-    receiverId: 'user_001',
-    content: '今天不在呢，不幸被困在一个 3 小时的研讨会里。简直是酷刑。',
-    createdAt: '2024-01-21T10:30:00Z',
-    read: true,
-  },
-];
+const mockMessages: Array<{
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  createdAt: string;
+  read: boolean;
+}> = [];
+
+const readUnreadCount = () => {
+  const raw = localStorage.getItem(LOCAL_CHAT_UNREAD_COUNT_KEY);
+  if (raw === null) {
+    localStorage.setItem(LOCAL_CHAT_UNREAD_COUNT_KEY, '2');
+    return 2;
+  }
+
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const writeUnreadCount = (count: number) => {
+  localStorage.setItem(LOCAL_CHAT_UNREAD_COUNT_KEY, String(Math.max(0, count)));
+};
 
 const mockQuestionnaireModules = [
   {
@@ -311,8 +310,18 @@ export const handlers = [
       code: 200,
       message: '获取成功',
       data: {
-        count: 2,
+        count: readUnreadCount(),
       },
+    });
+  }),
+
+  // POST /api/chat/read/:matchId
+  http.post('/api/chat/read/:matchId', async () => {
+    writeUnreadCount(0);
+    return HttpResponse.json({
+      code: 200,
+      message: '已读成功',
+      data: null,
     });
   }),
 ];

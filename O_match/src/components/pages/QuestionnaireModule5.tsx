@@ -10,6 +10,7 @@ import {
   calculateModule5Progress,
   calculateTotalProgress,
   isQuestionnaireAnswerComplete,
+  MODULE_MAX_PROGRESS,
 } from '@/utils/questionnaireProgress';
 
 const modules = [
@@ -69,7 +70,24 @@ const QuestionnaireModule5: React.FC = () => {
     setModuleProgress(5, currentModuleProgress);
   }, [currentModuleProgress, isHydrated, setModuleProgress]);
 
-  // 计算总进度（33题）
+  // 首次加载时自动滚动到第一个未完成的题目
+  const hasScrolledRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isHydrated || hasScrolledRef.current) return;
+    hasScrolledRef.current = true;
+    const questions = [
+      { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.q1) },
+      { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.q2) },
+      { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.q3) },
+      { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.q4) },
+      { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.q5) },
+      { id: 'q6', completed: isQuestionnaireAnswerComplete(formData.q6) },
+      { id: 'q7', completed: isQuestionnaireAnswerComplete(formData.q7) },
+    ];
+    requestAnimationFrame(() => focusFirstIncomplete(questions));
+  }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 计算总进度（34题）
   const totalProgress = calculateTotalProgress(moduleProgress);
 
   const updateFormData = (field: keyof FormData, value: string | string[]) => {
@@ -224,6 +242,19 @@ const QuestionnaireModule5: React.FC = () => {
     },
   ];
 
+  const handleModuleNavigate = (nextModuleId: number) => {
+    // 检查目标模块之前的所有模块是否都已完成
+    for (let m = 1; m < nextModuleId; m++) {
+      const key = `module${m}` as keyof typeof MODULE_MAX_PROGRESS;
+      if (moduleProgress[key] < MODULE_MAX_PROGRESS[key]) {
+        navigate(`/questionnaire/${m}`);
+        return;
+      }
+    }
+
+    navigate(`/questionnaire/${nextModuleId}`);
+  };
+
   const handleCompleteAndMatch = async () => {
     // 找到第一个未完成的题目
     const requiredQuestions = [
@@ -259,7 +290,7 @@ const QuestionnaireModule5: React.FC = () => {
         totalProgress={totalProgress}
         saveState={saveState}
         lastSavedAt={lastSavedAt}
-        onNavigate={(nextModuleId) => navigate(`/questionnaire/${nextModuleId}`)}
+        onNavigate={handleModuleNavigate}
       />
 
       {/* Survey Content Area */}

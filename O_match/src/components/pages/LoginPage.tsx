@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '@/services/authService';
+import { getQuestionnaireSnapshot, loadQuestionnaire } from '@/services/questionnaireService';
+import { resolveQuestionnaireModulePath } from '@/utils/questionnaireProgress';
 
 const HRBEU_EMAIL_SUFFIX = '@hrbeu.edu.cn';
 const HRBEU_EMAIL_MESSAGE = '仅支持 HEU 校园邮箱';
@@ -24,6 +26,8 @@ const LoginPage: React.FC = () => {
     return prefix ? `${prefix}${HRBEU_EMAIL_SUFFIX}` : '';
   };
 
+  const resolvePostLoginPath = () => resolveQuestionnaireModulePath(getQuestionnaireSnapshot());
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -42,7 +46,10 @@ const LoginPage: React.FC = () => {
       const result = await login({ username, email, password });
 
       if (result.success) {
-        navigate('/questionnaire');
+        // Do not block navigation on remote questionnaire hydration.
+        const targetPath = resolvePostLoginPath();
+        void loadQuestionnaire();
+        navigate(targetPath, { replace: true });
       } else {
         setError(result.message || '登录失败');
       }
@@ -71,7 +78,7 @@ const LoginPage: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="w-full max-w-lg px-6 relative z-10 py-24">
-        <div className="glass-card ghost-border rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex flex-col items-center text-center">
+        <div className="glass-card rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] flex flex-col items-center text-center">
           {/* Header Section */}
           <div className="mb-10 w-full">
             <h1 className="text-3xl font-bold font-headline text-on-surface tracking-tight mb-2">欢迎回来</h1>
@@ -112,7 +119,7 @@ const LoginPage: React.FC = () => {
               <div className="relative group">
                 <input
                   className="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 text-on-surface placeholder:text-outline/40 focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 ghost-border"
-                  placeholder="••••••••"
+                  placeholder="密码"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

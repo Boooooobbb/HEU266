@@ -87,7 +87,7 @@
             -webkit-backdrop-filter: blur(24px);
         }
         .ghost-border {
-            outline: 1px solid rgba(219, 194, 178, 0.2);
+            box-shadow: 0 0 0 1px rgba(219, 194, 178, 0.2);
         }
         .sunset-gradient {
             background: linear-gradient(135deg, #944a00 0%, #f68a2f 100%);
@@ -114,7 +114,7 @@
 <!-- Main Content Area -->
 <main class="w-full max-w-lg px-6 relative z-10 py-24">
 <!-- Central Floating Card -->
-<div class="glass-card ghost-border rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex flex-col items-center text-center">
+<div class="glass-card rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] flex flex-col items-center text-center">
 <!-- Header Section -->
 <div class="mb-10 w-full">
 <h1 class="text-3xl font-bold font-headline text-on-surface tracking-tight mb-2">绑定联系方式</h1>

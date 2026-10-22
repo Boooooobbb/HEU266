@@ -13,6 +13,10 @@ const HRBEU_EMAIL_MESSAGE = '仅支持 HEU 校园邮箱';
 const RESET_PASSWORD_COOLDOWN_MESSAGE = '发送过于频繁，请稍后再试';
 const RESET_PASSWORD_SAME_AS_OLD_MESSAGE = '新密码不能与旧密码相同，请换一个新密码';
 const PASSWORD_POLICY_MESSAGE = '密码不符合要求，请重新设置';
+const CURRENT_USER_CACHE_TTL_MS = 5000;
+
+let currentUserCache: { user: User | null; expiresAt: number } | null = null;
+let currentUserPromise: Promise<User | null> | null = null;
 
 const normalizeResetPasswordError = (message?: string): string => {
   if (!message) {
@@ -169,12 +173,15 @@ const mapAuthUser = (authUser: {
 const setClientAuth = (token: string, user: User) => {
   localStorage.setItem(TOKEN_STORAGE_KEY, token);
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  currentUserCache = { user, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
   useAuthStore.getState().setAuth(token, user);
 };
 
 const clearClientAuth = () => {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_STORAGE_KEY);
+  currentUserCache = { user: null, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
+  currentUserPromise = null;
   useAuthStore.getState().logout();
   resetQuestionnaireSessionCache();
 };
@@ -467,7 +474,10 @@ export const sendPasswordResetEmail = async (email: string): Promise<SendCodeRes
     return { success: false, message: '当前开发模式未启用真实找回密码邮件，请连接 Supabase 后再使用' };
   }
 
-  const redirectTo = `${window.location.origin}/reset-password`;
+  const origin = window.location.hostname === 'localhost'
+    ? window.location.origin
+    : window.location.origin.replace(/^http:/, 'https:');
+  const redirectTo = `${origin}/reset-password`;
   const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
     redirectTo,
   });
@@ -525,38 +535,58 @@ export const deleteAccount = async (): Promise<DeleteAccountResult> => {
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
-  if (hasSupabaseConfig && supabase) {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
+  if (currentUserCache && currentUserCache.expiresAt > Date.now()) {
+    return currentUserCache.user;
+  }
+
+  if (currentUserPromise) {
+    return currentUserPromise;
+  }
+
+  currentUserPromise = (async () => {
+    if (hasSupabaseConfig && supabase) {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        clearClientAuth();
+        return null;
+      }
+
+      const user = mapAuthUser(data.user);
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      useAuthStore.getState().confirmAuthenticated();
+      useAuthStore.getState().setUser(user);
+      currentUserCache = { user, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
+      return user;
+    }
+
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const userStr = localStorage.getItem(USER_STORAGE_KEY);
+
+    if (!token || !userStr) {
+      currentUserCache = { user: null, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
+      return null;
+    }
+
+    try {
+      const tokenData = JSON.parse(atob(token)) as { exp: number };
+      if (tokenData.exp < Date.now()) {
+        clearClientAuth();
+        return null;
+      }
+    } catch {
       clearClientAuth();
       return null;
     }
 
-    const user = mapAuthUser(data.user);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    useAuthStore.getState().setUser(user);
+    const user = JSON.parse(userStr) as User;
+    useAuthStore.getState().confirmAuthenticated();
+    currentUserCache = { user, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
     return user;
-  }
+  })().finally(() => {
+    currentUserPromise = null;
+  });
 
-  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
-  const userStr = localStorage.getItem(USER_STORAGE_KEY);
-
-  if (!token || !userStr) {
-    return null;
-  }
-
-  try {
-    const tokenData = JSON.parse(atob(token)) as { exp: number };
-    if (tokenData.exp < Date.now()) {
-      clearClientAuth();
-      return null;
-    }
-  } catch {
-    clearClientAuth();
-    return null;
-  }
-
-  return JSON.parse(userStr) as User;
+  return currentUserPromise;
 };
 
 export const isAuthenticated = (): boolean => {

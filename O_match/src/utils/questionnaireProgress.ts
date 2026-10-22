@@ -8,7 +8,30 @@ export interface ModuleProgress {
   module5: number;
 }
 
-export const QUESTIONNAIRE_TOTAL_QUESTIONS = 33;
+export const QUESTIONNAIRE_TOTAL_QUESTIONS = 34;
+
+export const MODULE_MAX_PROGRESS = {
+  module1: 6,
+  module2: 5,
+  module3: 10,
+  module4: 6,
+  module5: 7,
+} as const;
+
+export const resolveQuestionnaireModulePath = (
+  data: QuestionnaireAnswer | null | undefined
+): string => {
+  if (!data) return '/questionnaire/1';
+
+  const progress = calculateModuleProgress(data);
+  if (progress.module1 < MODULE_MAX_PROGRESS.module1) return '/questionnaire/1';
+  if (progress.module2 < MODULE_MAX_PROGRESS.module2) return '/questionnaire/2';
+  if (progress.module3 < MODULE_MAX_PROGRESS.module3) return '/questionnaire/3';
+  if (progress.module4 < MODULE_MAX_PROGRESS.module4) return '/questionnaire/4';
+  if (progress.module5 < MODULE_MAX_PROGRESS.module5) return '/questionnaire/5';
+
+  return '/waiting';
+};
 
 /**
  * 判断问卷答案在运行时是否真的已填写。
@@ -33,6 +56,7 @@ export const calculateModule1Progress = (
     module1?.stage,
     module1?.partnerStages,
     module1?.locations,
+    module1?.interests,
   ].filter(isQuestionnaireAnswerComplete).length;
 };
 

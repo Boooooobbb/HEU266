@@ -88,7 +88,7 @@
             -webkit-backdrop-filter: blur(24px);
         }
         .ghost-border {
-            outline: 1px solid rgba(219, 194, 178, 0.2);
+            box-shadow: 0 0 0 1px rgba(219, 194, 178, 0.2);
         }
         .glass-panel {
             background: rgba(255, 255, 255, 0.5);
@@ -100,7 +100,7 @@
 </head>
 <body class="min-h-screen selection:bg-primary-fixed selection:text-on-primary-fixed">
 <!-- TopNavBar -->
-<nav class="sticky top-4 mx-auto w-[95%] max-w-7xl rounded-2xl bg-white/60 dark:bg-stone-900/60 backdrop-blur-3xl outline outline-1 outline-orange-200/15 dark:outline-stone-700/20 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex justify-between items-center px-8 py-4 z-50">
+<nav class="sticky top-4 mx-auto w-[95%] max-w-7xl rounded-2xl bg-white/60 dark:bg-stone-900/60 backdrop-blur-3xl outline outline-1 outline-orange-200/15 dark:outline-stone-700/20 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] flex justify-between items-center px-8 py-4 z-50">
 <a href="index.html" class="text-2xl font-black text-orange-700 dark:text-orange-500 tracking-tighter flex items-center gap-2">
 <span>🍊</span>
 <span>意配</span>
@@ -129,7 +129,7 @@
 <!-- Settings Sections -->
 <div class="space-y-6">
 <!-- Account Security Section -->
-<div class="glass-card ghost-border rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06)]">
+<div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)]">
 <h2 class="font-headline text-xl font-bold text-on-surface px-2 mb-6 flex items-center gap-2">
 <span class="material-symbols-outlined text-primary">security</span>
 账号安全
@@ -186,7 +186,7 @@
 </div>
 
 <!-- Danger Zone Section -->
-<div class="glass-card ghost-border rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06)] border border-error/20">
+<div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] border border-error/20">
 <h2 class="font-headline text-xl font-bold text-error px-2 mb-6 flex items-center gap-2">
 <span class="material-symbols-outlined text-error">warning</span>
 危险操作

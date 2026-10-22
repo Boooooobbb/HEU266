@@ -4,6 +4,10 @@ import { sendPasswordResetEmail } from '@/services/authService';
 
 const HRBEU_EMAIL_SUFFIX = '@hrbeu.edu.cn';
 const HRBEU_EMAIL_MESSAGE = '仅支持 HEU 校园邮箱';
+const EMAIL_COOLDOWN_SECONDS = 30;
+
+const isRateLimitedError = (message?: string) =>
+  Boolean(message && (message.includes('过于频繁') || message.toLowerCase().includes('rate')));
 
 const ChangePasswordPage: React.FC = () => {
   const [emailPrefix, setEmailPrefix] = useState('');
@@ -12,6 +16,32 @@ const ChangePasswordPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const cooldownTimerRef = React.useRef<number | null>(null);
+
+  const clearCooldownTimer = () => {
+    if (cooldownTimerRef.current) {
+      window.clearInterval(cooldownTimerRef.current);
+      cooldownTimerRef.current = null;
+    }
+  };
+
+  const startCooldown = (seconds = EMAIL_COOLDOWN_SECONDS) => {
+    setCooldownSeconds(seconds);
+    clearCooldownTimer();
+    cooldownTimerRef.current = window.setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearCooldownTimer();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const resetCooldown = () => {
+    clearCooldownTimer();
+    setCooldownSeconds(0);
+  };
 
   const normalizeEmailPrefix = (value: string) => value.trim().toLowerCase().replace(/@hrbeu\.edu\.cn$/i, '');
 
@@ -42,31 +72,21 @@ const ChangePasswordPage: React.FC = () => {
     }
 
     setLoading(true);
+    startCooldown();
     try {
       const result = await sendPasswordResetEmail(buildHrbeuEmail(normalizedPrefix));
       if (result.success) {
         setHint(result.message || '重置密码邮件已发送，请前往邮箱查收');
-        setCooldownSeconds(60);
-        if (cooldownTimerRef.current) {
-          window.clearInterval(cooldownTimerRef.current);
-        }
-        cooldownTimerRef.current = window.setInterval(() => {
-          setCooldownSeconds((prev) => {
-            if (prev <= 1) {
-              if (cooldownTimerRef.current) {
-                window.clearInterval(cooldownTimerRef.current);
-                cooldownTimerRef.current = null;
-              }
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
       } else {
-        setError(result.message || '发送失败');
+        const message = result.message || '发送失败';
+        setError(message);
+        if (!isRateLimitedError(message)) {
+          resetCooldown();
+        }
       }
     } catch {
       setError('发送失败，请稍后重试');
+      resetCooldown();
     } finally {
       setLoading(false);
     }
@@ -74,9 +94,7 @@ const ChangePasswordPage: React.FC = () => {
 
   React.useEffect(() => {
     return () => {
-      if (cooldownTimerRef.current) {
-        window.clearInterval(cooldownTimerRef.current);
-      }
+      clearCooldownTimer();
     };
   }, []);
 
@@ -95,7 +113,7 @@ const ChangePasswordPage: React.FC = () => {
       </div>
 
       <main className="w-full max-w-lg px-6 relative z-10 py-24">
-        <div className="glass-card ghost-border rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex flex-col items-center text-center">
+        <div className="glass-card rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] flex flex-col items-center text-center">
           <div className="mb-10 w-full">
             <h1 className="text-3xl font-bold font-headline text-on-surface tracking-tight mb-2">修改密码</h1>
             <p className="text-on-surface-variant text-sm">输入校园邮箱，系统会发送重置密码邮件</p>
@@ -131,10 +149,10 @@ const ChangePasswordPage: React.FC = () => {
               disabled={loading || cooldownSeconds > 0}
               className="w-full sunset-gradient text-white font-bold py-5 rounded-full shadow-lg shadow-orange-700/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
             >
-              {loading
-                ? '发送中...'
-                : cooldownSeconds > 0
-                  ? `重新发送（${cooldownSeconds}s）`
+              {cooldownSeconds > 0
+                ? `重新发送（${cooldownSeconds}s）`
+                : loading
+                  ? '发送中...'
                   : '发送重置邮件'}
               <span className="material-symbols-outlined text-[20px]">mail</span>
             </button>

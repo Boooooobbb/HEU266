@@ -1,135 +1,273 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useMatchStore } from '@/store';
+
+const RADAR_DIMENSION_LABELS = ['价值观', '生活习惯', '性格互补', '关系期待', '期望匹配', '兴趣匹配'];
+
+// 正态分布参数（基于 1000 人测试数据）
+const DIST_MEAN = 54.4;
+const DIST_SD = 7.1;
+
+/** 正态分布 PDF */
+function normalPDF(x: number, mean: number, sd: number): number {
+  const z = (x - mean) / sd;
+  return Math.exp(-0.5 * z * z) / (sd * Math.sqrt(2 * Math.PI));
+}
 
 /**
- * 匹配报告页面
- * 根据后端匹配引擎的响应数据生成
- * 包含契合度、灵魂雷达图、破冰任务、共鸣时刻等内容
+ * 真实正态分布曲线组件
+ * 根据用户分数绘制准确的钟形曲线和位置标记
  */
+const DistributionCurve: React.FC<{ score: number }> = ({ score }) => {
+  const viewW = 400, viewH = 110;
+  const padLeft = 20, padRight = 20;
+  const plotW = viewW - padLeft - padRight;
+  const plotTop = 5, plotBottom = viewH - 28;
+
+  // 生成曲线点（score 0-100 范围映射到 x）
+  const minScore = Math.max(0, DIST_MEAN - 4 * DIST_SD);
+  const maxScore = Math.min(100, DIST_MEAN + 4 * DIST_SD);
+  const steps = 100;
+  const points: [number, number][] = [];
+  let maxPDF = 0;
+
+  for (let i = 0; i <= steps; i++) {
+    const x = minScore + (i / steps) * (maxScore - minScore);
+    const pdf = normalPDF(x, DIST_MEAN, DIST_SD);
+    if (pdf > maxPDF) maxPDF = pdf;
+    const sx = padLeft + ((x - minScore) / (maxScore - minScore)) * plotW;
+    const sy = plotBottom - (pdf / maxPDF) * (plotBottom - plotTop);
+    points.push([sx, sy]);
+  }
+
+  // SVG path
+  const pathD =
+    `M ${padLeft},${plotBottom} ` +
+    points.map(([x, y]) => `L ${x},${y}`).join(' ') +
+    ` L ${points[points.length - 1][0]},${plotBottom} Z`;
+
+  // 用户分数对应的 x 位置
+  const userX = padLeft + ((score - minScore) / (maxScore - minScore)) * plotW;
+  const userPDF = normalPDF(score, DIST_MEAN, DIST_SD);
+  const userY = plotBottom - (userPDF / maxPDF) * (plotBottom - plotTop);
+
+  // 百分位标记（P25, P50, P75）
+  const percentiles = [
+    { p: 25, score: Math.round(DIST_MEAN + DIST_SD * -0.674) },
+    { p: 50, score: Math.round(DIST_MEAN) },
+    { p: 75, score: Math.round(DIST_MEAN + DIST_SD * 0.674) },
+    { p: 90, score: Math.round(DIST_MEAN + DIST_SD * 1.282) },
+  ];
+
+  return (
+    <div className="relative w-full">
+      <svg
+        className="w-full"
+        viewBox={`0 0 ${viewW} ${viewH}`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.15" className="text-primary" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" className="text-primary" />
+          </linearGradient>
+        </defs>
+
+        {/* 曲线填充 */}
+        <path d={pathD} fill="url(#curveGrad)" />
+
+        {/* 曲线描边 */}
+        <path
+          d={points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x},${y}`).join(' ')}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className="text-outline-variant"
+        />
+
+        {/* 百分位刻度线 */}
+        {percentiles.map((pt) => {
+          const px = padLeft + ((pt.score - minScore) / (maxScore - minScore)) * plotW;
+          const py = plotBottom - (normalPDF(pt.score, DIST_MEAN, DIST_SD) / maxPDF) * (plotBottom - plotTop);
+          return (
+            <g key={pt.p}>
+              <line
+                x1={px} y1={py + 2} x2={px} y2={plotBottom + 4}
+                stroke="currentColor" strokeWidth="0.5" strokeDasharray="3,3"
+                className="text-outline-variant/50"
+              />
+              <text
+                x={px} y={plotBottom + 14}
+                textAnchor="middle"
+                className="text-[8px] fill-on-surface-variant/60"
+              >
+                P{pt.p}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* BETTER 区域标记（右半） */}
+        <text
+          x={padLeft + plotW * 0.72} y={plotTop + 10}
+          textAnchor="middle"
+          className="text-[8px] font-bold fill-primary/50 uppercase tracking-wider"
+        >
+          BETTER →
+        </text>
+
+        {/* YOU 标记 — 竖线 + 圆点 + 标签 */}
+        <line
+          x1={userX} y1={userY - 12} x2={userX} y2={plotBottom}
+          stroke="currentColor" strokeWidth="1.5" strokeDasharray="2,2"
+          className="text-primary"
+        />
+        <circle
+          cx={userX} cy={userY}
+          r="5"
+          className="fill-primary stroke-white"
+          strokeWidth="2"
+        />
+        <circle
+          cx={userX} cy={userY}
+          r="10"
+          className="fill-primary/20"
+        >
+          <animate
+            attributeName="r" values="10;16;10" dur="2s" repeatCount="indefinite"
+          />
+          <animate
+            attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"
+          />
+        </circle>
+
+        {/* YOU 标签气泡 */}
+        <rect
+          x={userX - 18} y={userY - 32}
+          width="36" height="16" rx="8"
+          className="fill-primary"
+        />
+        <text
+          x={userX} y={userY - 20}
+          textAnchor="middle"
+          className="text-[9px] font-bold fill-white"
+        >
+          YOU
+        </text>
+
+        {/* x 轴标签 */}
+        <text x={padLeft} y={viewH - 2} textAnchor="middle" className="text-[7px] fill-on-surface-variant/40">
+          {Math.round(minScore)}
+        </text>
+        <text x={padLeft + plotW / 2} y={viewH - 2} textAnchor="middle" className="text-[7px] fill-on-surface-variant/40">
+          契合度
+        </text>
+        <text x={padLeft + plotW} y={viewH - 2} textAnchor="middle" className="text-[7px] fill-on-surface-variant/40">
+          {Math.round(maxScore)}
+        </text>
+      </svg>
+    </div>
+  );
+};
+
 const MatchReportPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [matchData, setMatchData] = useState<any>(null);
+  const { matchReport, reportLoading, fetchMatchReport } = useMatchStore();
 
-  // 页面加载时获取匹配报告数据
   useEffect(() => {
-    // TODO: 对接后端 API 获取匹配报告数据
-    // const fetchMatchReport = async () => {
-    //   const response = await fetch('/api/matching/report', {
-    //     headers: {
-    //       'Authorization': `Bearer ${getToken()}`,
-    //     }
-    //   });
-    //   const data = await response.json();
-    //   setMatchData(data);
-    //   setLoading(false);
-    // };
-    // fetchMatchReport();
+    fetchMatchReport();
+  }, [fetchMatchReport]);
 
-    // 当前使用模拟数据（实际应从后端获取）
-    setTimeout(() => {
-      setMatchData({
-        matchId: 'match_123456',
-        compatibility: 98, // 契合度百分比
-        rankPercent: 99.4, // 击败多少比例的校友组合
-        matchedUser: {
-          id: 'user_789',
-          nickname: '灵魂伴侣',
-          avatar: '',
-        },
-        radarData: {
-          openness: 85,      // 开放性
-          responsibility: 78, // 责任感
-          agreeableness: 82,  // 宜人性
-          neuroticism: 65,    // 神经质
-          extraversion: 75,   // 外向性
-        },
-        iceBreakingTask: {
-          title: '书单交换',
-          description: '检测到你们的灵魂重合度极高。既然都偏爱 11 号楼的窗边座，不如在那交换一次近期最爱的书单？',
-          location: '11 号楼的窗边座',
-        },
-        timeRemaining: '71:59:42', // 剩余时间
-        resonancePoints: [
-          {
-            icon: 'night_shelter',
-            title: '深夜思想家',
-            description: '你们都勾选了"凌晨 2 点是灵感巅峰"，比起喧嚣的社交，更喜欢独处的静谧。',
-            color: 'primary',
-          },
-          {
-            icon: 'menu_book',
-            title: '纸质书信徒',
-            description: '都喜欢在学校 11 号楼的窗边阅读，且坚持认为纸张的触感无可替代。',
-            color: 'secondary',
-          },
-          {
-            icon: 'restaurant',
-            title: '麻辣拌狂热',
-            description: '在饮食倾向中，你们不约而同地把"加醋的麻辣拌"排到了第一位。',
-            color: 'tertiary',
-          },
-        ],
-      });
-      setLoading(false);
-    }, 500);
-  }, []);
-
-  if (loading) {
+  // 加载中
+  if (reportLoading) {
     return (
       <main className="max-w-4xl mx-auto px-6 mt-12 space-y-12 py-16 text-center">
-        <div className="text-on-surface-variant">加载中...</div>
+        <div className="text-on-surface-variant animate-pulse">正在生成匹配报告...</div>
       </main>
     );
   }
 
-  // 模拟数据（后端返回后替换）
-  const compatibility = matchData?.compatibility || 98;
-  const rankPercent = matchData?.rankPercent || 99.4;
-  const radarData = matchData?.radarData || { openness: 85, responsibility: 78, agreeableness: 82, neuroticism: 65, extraversion: 75 };
-  const iceTask = matchData?.iceBreakingTask || { title: '书单交换', description: '检测到你们的灵魂重合度极高。既然都偏爱 11 号楼的窗边座，不如在那交换一次近期最爱的书单？', location: '11 号楼的窗边座' };
-  const timeRemaining = matchData?.timeRemaining || '71:59:42';
-  const resonances = matchData?.resonancePoints || [
-    { icon: 'night_shelter', title: '深夜思想家', description: '你们都勾选了"凌晨 2 点是灵感巅峰"，比起喧嚣的社交，更喜欢独处的静谧。', color: 'primary' },
-    { icon: 'menu_book', title: '纸质书信徒', description: '都喜欢在学校 11 号楼的窗边阅读，且坚持认为纸张的触感无可替代。', color: 'secondary' },
-    { icon: 'restaurant', title: '麻辣拌狂热', description: '在饮食倾向中，你们不约而同地把"加醋的麻辣拌"排到了第一位。', color: 'tertiary' },
-  ];
+  // 无报告
+  if (!matchReport) {
+    return (
+      <main className="max-w-4xl mx-auto px-6 mt-12 space-y-12 py-16 text-center">
+        <div className="glass-card rounded-[2rem] p-12 space-y-4">
+          <span className="material-symbols-outlined text-6xl text-on-surface-variant/40">description</span>
+          <h2 className="text-2xl font-bold text-on-surface">暂无匹配报告</h2>
+          <p className="text-on-surface-variant">你还没有完成匹配，或者匹配报告尚未生成。</p>
+          <button
+            onClick={() => navigate('/waiting')}
+            className="mt-4 px-8 py-3 bg-primary text-white rounded-full font-bold"
+          >
+            返回等待页
+          </button>
+        </div>
+      </main>
+    );
+  }
 
-  // 计算雷达图顶点坐标
+  const compatibility = matchReport.compatibilityScore;
+  const rankPercent = matchReport.rankPercent;
+  const iceTask = matchReport.iceBreakingTask;
+  const timeRemaining = matchReport.timeRemaining;
+  const resonances = matchReport.resonancePoints;
+
+  // 五维度分数（0-100）
+  const dimScores = matchReport.dimensions.map((d) => d.score);
+
+  // 计算六边形雷达图顶点坐标（6维等分圆）
   const getRadarPoints = () => {
     const center = 50;
     const maxRadius = 40;
-    const points = [
-      { x: center, y: center - maxRadius * (radarData.openness / 100) }, // 开放性 - 上
-      { x: center + maxRadius * (radarData.extraversion / 100) * 0.95, y: center - maxRadius * (radarData.extraversion / 100) * 0.3 }, // 外向性 - 右上
-      { x: center + maxRadius * (radarData.responsibility / 100) * 0.7, y: center + maxRadius * (radarData.responsibility / 100) * 0.7 }, // 责任感 - 右下
-      { x: center - maxRadius * (radarData.agreeableness / 100) * 0.7, y: center + maxRadius * (radarData.agreeableness / 100) * 0.7 }, // 宜人性 - 左下
-      { x: center - maxRadius * (radarData.neuroticism / 100) * 0.95, y: center - maxRadius * (radarData.neuroticism / 100) * 0.3 }, // 神经质 - 左上
-    ];
-    return points.map(p => `${p.x},${p.y}`).join(' ');
+    const angleCount = 6;
+    const angles = Array.from({ length: angleCount }, (_, i) =>
+      -Math.PI / 2 + (i * 2 * Math.PI) / angleCount
+    );
+
+    return dimScores
+      .map((score, i) => {
+        const r = maxRadius * (score / 100);
+        const x = center + r * Math.cos(angles[i]);
+        const y = center + r * Math.sin(angles[i]);
+        return `${x},${y}`;
+      })
+      .join(' ');
   };
+
+  // 标签位置
+  const getLabelPositions = () => {
+    const center = 50;
+    const labelRadius = 54;
+    const angleCount = 6;
+    const angles = Array.from({ length: angleCount }, (_, i) =>
+      -Math.PI / 2 + (i * 2 * Math.PI) / angleCount
+    );
+    return angles.map((angle) => ({
+      x: center + labelRadius * Math.cos(angle),
+      y: center + labelRadius * Math.sin(angle),
+    }));
+  };
+
+  const labels = getLabelPositions();
 
   return (
     <main className="max-w-4xl mx-auto px-6 mt-12 space-y-12 pb-32">
-      {/* Hero Section: The Ritual Reveal */}
+      {/* Hero Section: 契合度 */}
       <section className="relative text-center py-16 px-8 rounded-[2rem] overflow-hidden bg-surface-container-low">
         <div className="absolute inset-0 opacity-10 pointer-events-none" />
         <div className="relative z-10 space-y-4">
           <span className="label-md text-primary font-semibold tracking-widest uppercase">Matching Report</span>
           <h1 className="text-7xl md:text-8xl font-black tracking-tighter text-on-surface">
-            契合度 <span className="bg-gradient-to-tr from-primary to-primary-container bg-clip-text text-transparent">{compatibility}%</span>
+            契合度{' '}
+            <span className="bg-gradient-to-tr from-primary to-primary-container bg-clip-text text-transparent">
+              {compatibility}%
+            </span>
           </h1>
           {/* Normal Distribution Visualization */}
           <div className="w-full max-w-md mx-auto pt-8">
-            <div className="relative h-24 w-full">
-              <svg className="w-full h-full text-surface-container-highest stroke-outline-variant fill-none" viewBox="0 0 400 100">
-                <path d="M0,100 Q100,100 200,10 T300,100 T400,100" strokeWidth="2"></path>
-                <circle className="fill-primary shadow-lg" cx="215" cy="22" r="6"></circle>
-                <text className="text-[10px] font-bold fill-primary" x="230" y="25">YOU</text>
-              </svg>
-              <div className="mt-2 text-label-md text-on-surface-variant italic">
-                恭喜！你们的契合度击败了全校 {rankPercent}% 的校友组合
-              </div>
+            <DistributionCurve score={compatibility} />
+            <div className="mt-2 text-label-md text-on-surface-variant italic">
+              恭喜！你们的契合度击败了全校 {rankPercent}% 的校友组合
             </div>
           </div>
         </div>
@@ -141,27 +279,47 @@ const MatchReportPage: React.FC = () => {
         <div className="md:col-span-7 glass-card bento-asymmetric p-8 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-2xl font-bold tracking-tight mb-2">灵魂雷达图</h3>
-            <p className="text-on-surface-variant text-sm mb-8">基于大五人格与生活轨迹的深度重合度分析</p>
+            <p className="text-on-surface-variant text-sm mb-8">基于五维问卷的深度契合度分析</p>
           </div>
           <div className="relative aspect-square w-full max-w-[300px] mx-auto flex items-center justify-center">
             {/* Radar Mesh Background */}
-            <div className="absolute inset-0 radar-grid bg-surface-container-high opacity-30" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }}></div>
-            <div className="absolute inset-4 radar-grid bg-surface-container-high opacity-50" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }}></div>
-            <div className="absolute inset-8 radar-grid bg-surface-container-high opacity-70" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }}></div>
+            <div className="absolute inset-0 radar-grid bg-surface-container-high opacity-30" style={{ clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)' }}></div>
+            <div className="absolute inset-4 radar-grid bg-surface-container-high opacity-50" style={{ clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)' }}></div>
+            <div className="absolute inset-8 radar-grid bg-surface-container-high opacity-70" style={{ clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)' }}></div>
             {/* Radar Polygon Fill */}
             <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100">
               <polygon className="fill-primary/20 stroke-primary stroke-[1.5]" points={getRadarPoints()}></polygon>
-              {/* Labels */}
-              <text className="text-[6px] font-bold fill-on-surface" textAnchor="middle" x="50" y="5">开放性</text>
-              <text className="text-[6px] font-bold fill-on-surface" textAnchor="start" x="95" y="35">责任感</text>
-              <text className="text-[6px] font-bold fill-on-surface" textAnchor="middle" x="80" y="92">宜人性</text>
-              <text className="text-[6px] font-bold fill-on-surface" textAnchor="middle" x="20" y="92">神经质</text>
-              <text className="text-[6px] font-bold fill-on-surface" textAnchor="end" x="5" y="35">外向性</text>
+              {RADAR_DIMENSION_LABELS.map((label, i) => {
+                const anchor = i === 0 ? 'middle' : i < 3 ? 'start' : 'end';
+                return (
+                  <text
+                    key={label}
+                    className="text-[6px] font-bold fill-on-surface"
+                    x={labels[i].x}
+                    y={labels[i].y}
+                    textAnchor={anchor}
+                  >
+                    {label}
+                  </text>
+                );
+              })}
+              {/* 分数标注 */}
+              {dimScores.map((score, i) => {
+                const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 6;
+                const scoreR = 40 * (score / 100) + 6;
+                const sx = 50 + scoreR * Math.cos(angle);
+                const sy = 50 + scoreR * Math.sin(angle);
+                return (
+                  <text key={`s${i}`} className="text-[5px] fill-primary font-bold" textAnchor="middle" x={sx} y={sy}>
+                    {Math.round(score)}
+                  </text>
+                );
+              })}
             </svg>
           </div>
         </div>
 
-        {/* Identity Preview Card */}
+        {/* Ice Breaking Card + Countdown */}
         <div className="md:col-span-5 flex flex-col gap-6">
           <div className="flex-1 glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between border border-white/20">
             <div>
@@ -169,14 +327,12 @@ const MatchReportPage: React.FC = () => {
                 <span className="material-symbols-outlined text-primary text-xl">celebration</span>
                 <h4 className="text-xl font-bold tracking-tight">破冰任务</h4>
               </div>
-              <p className="text-on-surface-variant text-sm leading-relaxed mb-6">
-                {iceTask.description}
-              </p>
+              <p className="text-on-surface-variant text-sm leading-relaxed mb-6">{iceTask.description}</p>
             </div>
             <div className="mt-auto">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-wider uppercase">
                 <span className="w-1 h-1 rounded-full bg-primary"></span>
-                Soul Connection
+                {iceTask.location || 'Soul Connection'}
               </div>
             </div>
           </div>
@@ -191,22 +347,32 @@ const MatchReportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Resonance Points: The Commonality Cards */}
+      {/* Resonance Points */}
       <section className="space-y-6">
         <h3 className="text-3xl font-bold tracking-tight px-2">共鸣时刻</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {resonances.map((item: any, index: number) => (
+          {resonances.map((item, index) => (
             <div key={index} className="p-8 rounded-[2rem] bg-surface-container-low space-y-4 hover:shadow-xl transition-shadow">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                item.color === 'primary' ? 'bg-primary-fixed' :
-                item.color === 'secondary' ? 'bg-secondary-fixed' :
-                'bg-tertiary-fixed'
-              }`}>
-                <span className={`material-symbols-outlined ${
-                  item.color === 'primary' ? 'text-primary' :
-                  item.color === 'secondary' ? 'text-secondary' :
-                  'text-tertiary'
-                }`}>{item.icon}</span>
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                  item.color === 'primary'
+                    ? 'bg-primary-fixed'
+                    : item.color === 'secondary'
+                      ? 'bg-secondary-fixed'
+                      : 'bg-tertiary-fixed'
+                }`}
+              >
+                <span
+                  className={`material-symbols-outlined ${
+                    item.color === 'primary'
+                      ? 'text-primary'
+                      : item.color === 'secondary'
+                        ? 'text-secondary'
+                        : 'text-tertiary'
+                  }`}
+                >
+                  {item.icon}
+                </span>
               </div>
               <h5 className="text-lg font-bold">{item.title}</h5>
               <p className="text-on-surface-variant text-sm leading-relaxed">{item.description}</p>

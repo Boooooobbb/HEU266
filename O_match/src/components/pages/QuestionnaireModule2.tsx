@@ -9,6 +9,7 @@ import {
   calculateModule2Progress,
   calculateTotalProgress,
   isQuestionnaireAnswerComplete,
+  MODULE_MAX_PROGRESS,
 } from '@/utils/questionnaireProgress';
 
 const modules = [
@@ -74,7 +75,22 @@ const QuestionnaireModule2: React.FC = () => {
     setModuleProgress(2, currentModuleProgress);
   }, [currentModuleProgress, isHydrated, setModuleProgress]);
 
-  // 计算总进度（33题）
+  // 首次加载时自动滚动到第一个未完成的题目
+  const hasScrolledRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isHydrated || hasScrolledRef.current) return;
+    hasScrolledRef.current = true;
+    const questions = [
+      { id: 'q1', completed: isQuestionnaireAnswerComplete(formData.q1Schedule) && isQuestionnaireAnswerComplete(formData.q1Attitude) },
+      { id: 'q2', completed: isQuestionnaireAnswerComplete(formData.q2Space) && isQuestionnaireAnswerComplete(formData.q2Tolerance) },
+      { id: 'q3', completed: isQuestionnaireAnswerComplete(formData.q3Frequency) && isQuestionnaireAnswerComplete(formData.q3Bottomline) },
+      { id: 'q4', completed: isQuestionnaireAnswerComplete(formData.q4Smoking) && isQuestionnaireAnswerComplete(formData.q4Bottomline) },
+      { id: 'q5', completed: isQuestionnaireAnswerComplete(formData.q5Alcohol) && isQuestionnaireAnswerComplete(formData.q5Bottomline) },
+    ];
+    requestAnimationFrame(() => focusFirstIncomplete(questions));
+  }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 计算总进度（34题）
   const totalProgress = calculateTotalProgress(moduleProgress);
 
   const updateFormData = (field: keyof FormData, value: string) => {
@@ -116,8 +132,19 @@ const QuestionnaireModule2: React.FC = () => {
   };
 
   const handleModuleNavigate = (nextModuleId: number) => {
+    // 向前跳转：检查当前模块是否完成
     if (nextModuleId > currentModule) {
       if (focusFirstIncomplete(requiredQuestions)) {
+        return;
+      }
+    }
+
+    // 检查目标模块之前的所有模块是否都已完成
+    for (let m = 1; m < nextModuleId; m++) {
+      if (m === currentModule) continue;
+      const key = `module${m}` as keyof typeof MODULE_MAX_PROGRESS;
+      if (moduleProgress[key] < MODULE_MAX_PROGRESS[key]) {
+        navigate(`/questionnaire/${m}`);
         return;
       }
     }

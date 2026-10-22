@@ -9,6 +9,7 @@ import {
   calculateModule4Progress,
   calculateTotalProgress,
   isQuestionnaireAnswerComplete,
+  MODULE_MAX_PROGRESS,
 } from '@/utils/questionnaireProgress';
 
 const modules = [
@@ -66,7 +67,19 @@ const QuestionnaireModule4: React.FC = () => {
     setModuleProgress(4, currentModuleProgress);
   }, [currentModuleProgress, isHydrated, setModuleProgress]);
 
-  // 计算总进度（33题）
+  // 首次加载时自动滚动到第一个未完成的题目
+  const hasScrolledRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isHydrated || hasScrolledRef.current) return;
+    hasScrolledRef.current = true;
+    const questions = Array.from({ length: 6 }, (_, i) => ({
+      id: `q${i + 1}`,
+      completed: isQuestionnaireAnswerComplete(formData[`q${i + 1}` as keyof FormData]),
+    }));
+    requestAnimationFrame(() => focusFirstIncomplete(questions));
+  }, [isHydrated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 计算总进度（34题）
   const totalProgress = calculateTotalProgress(moduleProgress);
 
   const updateFormData = (field: keyof FormData, value: string) => {
@@ -94,8 +107,19 @@ const QuestionnaireModule4: React.FC = () => {
   };
 
   const handleModuleNavigate = (nextModuleId: number) => {
+    // 向前跳转：检查当前模块是否完成
     if (nextModuleId > currentModule) {
       if (focusFirstIncomplete(requiredQuestions)) {
+        return;
+      }
+    }
+
+    // 检查目标模块之前的所有模块是否都已完成
+    for (let m = 1; m < nextModuleId; m++) {
+      if (m === currentModule) continue;
+      const key = `module${m}` as keyof typeof MODULE_MAX_PROGRESS;
+      if (moduleProgress[key] < MODULE_MAX_PROGRESS[key]) {
+        navigate(`/questionnaire/${m}`);
         return;
       }
     }

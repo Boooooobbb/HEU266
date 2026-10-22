@@ -5,7 +5,7 @@ import QuestionnaireModule2 from './QuestionnaireModule2';
 import QuestionnaireModule3 from './QuestionnaireModule3';
 import QuestionnaireModule4 from './QuestionnaireModule4';
 import QuestionnaireModule5 from './QuestionnaireModule5';
-import { loadQuestionnaire } from '@/services/questionnaireService';
+import { getQuestionnaireSnapshot, loadQuestionnaire } from '@/services/questionnaireService';
 import { calculateModuleProgress } from '@/utils/questionnaireProgress';
 import { useQuestionnaireStore } from '@/store';
 
@@ -15,6 +15,21 @@ const QuestionnairePage: React.FC = () => {
   const location = useLocation();
   const currentModule = moduleId ? parseInt(moduleId) : 1;
   const { setModuleProgress } = useQuestionnaireStore();
+
+  const localSnapshot = getQuestionnaireSnapshot();
+
+  useEffect(() => {
+    if (!localSnapshot) {
+      return;
+    }
+
+    const progress = calculateModuleProgress(localSnapshot);
+    setModuleProgress(1, progress.module1);
+    setModuleProgress(2, progress.module2);
+    setModuleProgress(3, progress.module3);
+    setModuleProgress(4, progress.module4);
+    setModuleProgress(5, progress.module5);
+  }, [localSnapshot, setModuleProgress]);
 
   // 路由变化时滚动到顶部
   useEffect(() => {

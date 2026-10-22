@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { resetPassword } from '@/services/authService';
+import { PASSWORD_RULE_MESSAGE, isValidPassword } from '@/utils/password';
+import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +13,35 @@ const ResetPasswordPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (!hasSupabaseConfig || !supabase) {
+      setChecking(false);
+      return;
+    }
+
+    const client = supabase;
+    let cancelled = false;
+
+    const verifySession = async () => {
+      const { data, error: sessionError } = await client.auth.getSession();
+      if (cancelled) return;
+
+      if (sessionError || !data.session) {
+        setError('密码重置链接已失效，请重新获取');
+        window.setTimeout(() => {
+          if (!cancelled) navigate('/forgot-password', { replace: true });
+        }, 1500);
+        return;
+      }
+
+      setChecking(false);
+    };
+
+    verifySession();
+    return () => { cancelled = true; };
+  }, [navigate]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +58,8 @@ const ResetPasswordPage: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('密码长度至少为6位');
+    if (!isValidPassword(password)) {
+      setError(PASSWORD_RULE_MESSAGE);
       return;
     }
 
@@ -65,19 +96,24 @@ const ResetPasswordPage: React.FC = () => {
       </div>
 
       <main className="w-full max-w-lg px-6 relative z-10 py-24">
-        <div className="glass-card ghost-border rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] flex flex-col items-center text-center">
+        <div className="glass-card rounded-[2rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] flex flex-col items-center text-center">
           <div className="mb-10 w-full">
             <h1 className="text-3xl font-bold font-headline text-on-surface tracking-tight mb-2">重设密码</h1>
             <p className="text-on-surface-variant text-sm">输入新密码完成修改</p>
           </div>
 
+          {checking && (
+            <div className="text-on-surface-variant text-sm animate-pulse">验证身份中...</div>
+          )}
+
+          {!checking && (
           <form className="w-full space-y-6 text-left" onSubmit={handleResetPassword}>
             <div className="space-y-2">
               <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant ml-4">新密码</label>
               <div className="relative group">
                 <input
                   className="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 pr-20 text-on-surface placeholder:text-outline/40 focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 ghost-border"
-                  placeholder="••••••••"
+                  placeholder="密码"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -92,6 +128,7 @@ const ResetPasswordPage: React.FC = () => {
                   <span className="material-symbols-outlined text-[20px] leading-none">{showPassword ? 'visibility' : 'visibility_off'}</span>
                 </button>
               </div>
+              <p className="text-xs text-on-surface-variant ml-4">{PASSWORD_RULE_MESSAGE}</p>
             </div>
 
             <div className="space-y-2">
@@ -99,7 +136,7 @@ const ResetPasswordPage: React.FC = () => {
               <div className="relative group">
                 <input
                   className="w-full bg-surface-container-low border-none rounded-2xl py-4 px-6 pr-20 text-on-surface placeholder:text-outline/40 focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 ghost-border"
-                  placeholder="••••••••"
+                  placeholder="确认密码"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -127,11 +164,9 @@ const ResetPasswordPage: React.FC = () => {
               {loading ? '提交中...' : '更新密码'} <span className="material-symbols-outlined text-[20px]">lock_reset</span>
             </button>
           </form>
+          )}
 
           <div className="pt-8 border-t border-orange-100/30 w-full mt-10">
-            <p className="text-sm font-medium text-on-surface-variant">
-              记起密码了？<Link to="/login" className="text-secondary font-bold hover:opacity-80 transition-opacity ml-1">返回登录</Link>
-            </p>
           </div>
         </div>
       </main>

@@ -17,9 +17,7 @@ const ProfilePage: React.FC = () => {
   return (
     <main className="pt-32 pb-44 px-4 md:px-8 max-w-4xl mx-auto">
       {/* Profile Hero Section */}
-      <div className="glass-card ghost-border rounded-[2.5rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06)] relative overflow-hidden">
-        {/* Decorative Gradient Glow */}
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary-container/20 blur-[80px] rounded-full" />
+      <div className="glass-card rounded-[2.5rem] p-8 md:p-12 shadow-[0_8px_32px_rgba(28,28,24,0.06),0_0_0_1px_rgba(219,194,178,0.2)] relative overflow-hidden">
 
         <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
           {/* User Avatar */}
@@ -62,7 +60,7 @@ const ProfilePage: React.FC = () => {
             </Link>
 
             {/* Notification Preferences Card */}
-            <button className="flex items-center p-6 bg-surface-container-low hover:bg-surface-container-lowest transition-all duration-300 rounded-[1.5rem] group text-left">
+            <Link to="/notifications" className="flex items-center p-6 bg-surface-container-low hover:bg-surface-container-lowest transition-all duration-300 rounded-[1.5rem] group text-left">
               <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm group-hover:scale-110 transition-transform">
                 <span className="material-symbols-outlined">notifications_active</span>
               </div>
@@ -71,19 +69,28 @@ const ProfilePage: React.FC = () => {
                 <div className="text-on-surface-variant text-sm">推送与邮件提醒</div>
               </div>
               <span className="material-symbols-outlined text-outline-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
-            </button>
+            </Link>
 
-            {/* Questionnaire Weighting Card */}
-            <Link to="/questionnaire" className="flex items-center p-6 bg-surface-container-low hover:bg-surface-container-lowest transition-all duration-300 rounded-[1.5rem] group text-left">
+            {/* Feedback Card */}
+            <Link to="/feedback" className="flex items-center p-6 bg-surface-container-low hover:bg-surface-container-lowest transition-all duration-300 rounded-[1.5rem] group text-left">
               <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined">analytics</span>
+                <span className="material-symbols-outlined">support_agent</span>
               </div>
               <div className="ml-4 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-on-surface font-bold">问卷中心</span>
-                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-black rounded-md">85% OPTIMIZED</span>
-                </div>
-                <div className="text-on-surface-variant text-sm">匹配算法权重调节</div>
+                <div className="text-on-surface font-bold">问题反馈</div>
+                <div className="text-on-surface-variant text-sm">提交 Bug 与功能建议</div>
+              </div>
+              <span className="material-symbols-outlined text-outline-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+            </Link>
+
+            {/* Contact Methods Card */}
+            <Link to="/contact-methods" className="flex items-center p-6 bg-surface-container-low hover:bg-surface-container-lowest transition-all duration-300 rounded-[1.5rem] group text-left">
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary shadow-sm group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined">perm_contact_calendar</span>
+              </div>
+              <div className="ml-4 flex-1">
+                <div className="text-on-surface font-bold">联系方式管理</div>
+                <div className="text-on-surface-variant text-sm">微信、QQ、抖音快捷交换</div>
               </div>
               <span className="material-symbols-outlined text-outline-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
             </Link>
