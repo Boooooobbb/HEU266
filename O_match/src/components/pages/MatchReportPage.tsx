@@ -1,125 +1,132 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMatchStore } from '@/store';
+import type { MatchScoreDistribution } from '@/types';
 
 const RADAR_DIMENSION_LABELS = ['价值观', '生活习惯', '性格互补', '关系期待', '期望匹配', '兴趣匹配'];
 
-// 正态分布参数（基于 1000 人测试数据）
-const DIST_MEAN = 54.4;
-const DIST_SD = 7.1;
+function createSmoothPath(points: Array<{ x: number; y: number }>): string {
+  if (points.length === 0) return '';
 
-/** 正态分布 PDF */
-function normalPDF(x: number, mean: number, sd: number): number {
-  const z = (x - mean) / sd;
-  return Math.exp(-0.5 * z * z) / (sd * Math.sqrt(2 * Math.PI));
+  return points.slice(1).reduce((path, point, index) => {
+    const previous = points[index];
+    const middleX = (previous.x + point.x) / 2;
+    return `${path} C ${middleX},${previous.y} ${middleX},${point.y} ${point.x},${point.y}`;
+  }, `M ${points[0].x},${points[0].y}`);
 }
 
-/**
- * 真实正态分布曲线组件
- * 根据用户分数绘制准确的钟形曲线和位置标记
- */
-const DistributionCurve: React.FC<{ score: number }> = ({ score }) => {
-  const viewW = 400, viewH = 110;
-  const padLeft = 20, padRight = 20;
+/** 匿名匹配分布及当前组合所处位置。 */
+const DistributionCurve: React.FC<{
+  score: number;
+  distribution: MatchScoreDistribution;
+}> = ({ score, distribution }) => {
+  const viewW = 520;
+  const viewH = 178;
+  const padLeft = 28;
+  const padRight = 28;
   const plotW = viewW - padLeft - padRight;
-  const plotTop = 5, plotBottom = viewH - 28;
-
-  // 生成曲线点（score 0-100 范围映射到 x）
-  const minScore = Math.max(0, DIST_MEAN - 4 * DIST_SD);
-  const maxScore = Math.min(100, DIST_MEAN + 4 * DIST_SD);
-  const steps = 100;
-  const points: [number, number][] = [];
-  let maxPDF = 0;
-
-  for (let i = 0; i <= steps; i++) {
-    const x = minScore + (i / steps) * (maxScore - minScore);
-    const pdf = normalPDF(x, DIST_MEAN, DIST_SD);
-    if (pdf > maxPDF) maxPDF = pdf;
-    const sx = padLeft + ((x - minScore) / (maxScore - minScore)) * plotW;
-    const sy = plotBottom - (pdf / maxPDF) * (plotBottom - plotTop);
-    points.push([sx, sy]);
-  }
-
-  // SVG path
-  const pathD =
-    `M ${padLeft},${plotBottom} ` +
-    points.map(([x, y]) => `L ${x},${y}`).join(' ') +
-    ` L ${points[points.length - 1][0]},${plotBottom} Z`;
-
-  // 用户分数对应的 x 位置
-  const userX = padLeft + ((score - minScore) / (maxScore - minScore)) * plotW;
-  const userPDF = normalPDF(score, DIST_MEAN, DIST_SD);
-  const userY = plotBottom - (userPDF / maxPDF) * (plotBottom - plotTop);
-
-  // 百分位标记（P25, P50, P75）
-  const percentiles = [
-    { p: 25, score: Math.round(DIST_MEAN + DIST_SD * -0.674) },
-    { p: 50, score: Math.round(DIST_MEAN) },
-    { p: 75, score: Math.round(DIST_MEAN + DIST_SD * 0.674) },
-    { p: 90, score: Math.round(DIST_MEAN + DIST_SD * 1.282) },
-  ];
+  const plotTop = 24;
+  const plotBottom = 128;
+  const plotH = plotBottom - plotTop;
+  const isEmpirical = distribution.source === 'empirical';
+  const values = isEmpirical
+    ? distribution.bins.map((bin) => bin.count)
+    : Array.from({ length: 81 }, (_, index) => {
+      const x = (index / 80) * 100;
+      const z = (x - distribution.mean) / distribution.standardDeviation;
+      return Math.exp(-0.5 * z * z);
+    });
+  const smoothedValues = values.map((value, index) => {
+    const previous = values[index - 1] ?? value;
+    const next = values[index + 1] ?? value;
+    return (previous + value * 2 + next) / 4;
+  });
+  const maxValue = Math.max(...smoothedValues, 1);
+  const binWidth = plotW / Math.max(distribution.bins.length, 1);
+  const points = smoothedValues.map((value, index) => ({
+    x: isEmpirical
+      ? padLeft + (index + 0.5) * binWidth
+      : padLeft + (index / Math.max(smoothedValues.length - 1, 1)) * plotW,
+    y: plotBottom - (value / maxValue) * plotH,
+  }));
+  const curvePath = createSmoothPath(points);
+  const areaPath = points.length > 0
+    ? `${curvePath} L ${points[points.length - 1].x},${plotBottom} L ${points[0].x},${plotBottom} Z`
+    : '';
+  const safeScore = Math.min(100, Math.max(0, score));
+  const userX = padLeft + (safeScore / 100) * plotW;
+  const userBucket = Math.min(
+    points.length - 1,
+    Math.max(0, Math.floor((safeScore / 100) * points.length)),
+  );
+  const userY = points[userBucket]?.y ?? plotBottom;
+  const bubbleX = Math.min(viewW - padRight - 27, Math.max(padLeft + 27, userX));
+  const clipWidth = Math.max(0, userX - padLeft);
+  const sourceLabel = isEmpirical
+    ? `本周 ${distribution.sampleSize} 对真实匹配`
+    : `${distribution.sampleSize.toLocaleString('zh-CN')} 组算法模拟参考`;
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" aria-label={`契合度分布，你们的得分为 ${score}%`}>
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2 px-1 text-left">
+        <div>
+          <div className="text-sm font-bold text-on-surface">在匹配分布中的位置</div>
+          <div className="mt-0.5 text-[11px] text-on-surface-variant">{sourceLabel}</div>
+        </div>
+        <div className="text-[10px] font-semibold tracking-wide text-primary/70">越靠右契合度越高 →</div>
+      </div>
       <svg
         className="w-full"
         viewBox={`0 0 ${viewW} ${viewH}`}
         xmlns="http://www.w3.org/2000/svg"
+        role="img"
       >
         <defs>
-          <linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.15" className="text-primary" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" className="text-primary" />
+          <linearGradient id="distributionCurveGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" className="text-primary" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0.03" className="text-primary" />
           </linearGradient>
+          <clipPath id="distributionScoreClip">
+            <rect x={padLeft} y={plotTop - 4} width={clipWidth} height={plotH + 8} />
+          </clipPath>
         </defs>
 
-        {/* 曲线填充 */}
-        <path d={pathD} fill="url(#curveGrad)" />
-
-        {/* 曲线描边 */}
-        <path
-          d={points.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x},${y}`).join(' ')}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="text-outline-variant"
+        <line
+          x1={padLeft}
+          y1={plotBottom}
+          x2={viewW - padRight}
+          y2={plotBottom}
+          className="stroke-outline-variant/50"
+          strokeWidth="1"
         />
 
-        {/* 百分位刻度线 */}
-        {percentiles.map((pt) => {
-          const px = padLeft + ((pt.score - minScore) / (maxScore - minScore)) * plotW;
-          const py = plotBottom - (normalPDF(pt.score, DIST_MEAN, DIST_SD) / maxPDF) * (plotBottom - plotTop);
+        {isEmpirical && distribution.bins.map((bin, index) => {
+          const height = (bin.count / Math.max(...values, 1)) * (plotH - 4);
           return (
-            <g key={pt.p}>
-              <line
-                x1={px} y1={py + 2} x2={px} y2={plotBottom + 4}
-                stroke="currentColor" strokeWidth="0.5" strokeDasharray="3,3"
-                className="text-outline-variant/50"
-              />
-              <text
-                x={px} y={plotBottom + 14}
-                textAnchor="middle"
-                className="text-[8px] fill-on-surface-variant/60"
-              >
-                P{pt.p}
-              </text>
-            </g>
+            <rect
+              key={`${bin.min}-${bin.max}`}
+              x={padLeft + index * binWidth + 1}
+              y={plotBottom - height}
+              width={Math.max(1, binWidth - 2)}
+              height={height}
+              rx="2"
+              className={bin.max <= safeScore ? 'fill-primary/20' : 'fill-outline-variant/20'}
+            />
           );
         })}
 
-        {/* BETTER 区域标记（右半） */}
-        <text
-          x={padLeft + plotW * 0.72} y={plotTop + 10}
-          textAnchor="middle"
-          className="text-[8px] font-bold fill-primary/50 uppercase tracking-wider"
-        >
-          BETTER →
-        </text>
-
-        {/* YOU 标记 — 竖线 + 圆点 + 标签 */}
+        <path d={areaPath} className="fill-outline-variant/10" />
+        <path d={areaPath} fill="url(#distributionCurveGradient)" clipPath="url(#distributionScoreClip)" />
+        <path
+          d={curvePath}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="text-outline-variant/80"
+        />
         <line
-          x1={userX} y1={userY - 12} x2={userX} y2={plotBottom}
-          stroke="currentColor" strokeWidth="1.5" strokeDasharray="2,2"
+          x1={userX} y1={Math.max(plotTop, userY - 12)} x2={userX} y2={plotBottom}
+          stroke="currentColor" strokeWidth="2" strokeDasharray="3,3"
           className="text-primary"
         />
         <circle
@@ -128,42 +135,32 @@ const DistributionCurve: React.FC<{ score: number }> = ({ score }) => {
           className="fill-primary stroke-white"
           strokeWidth="2"
         />
-        <circle
-          cx={userX} cy={userY}
-          r="10"
-          className="fill-primary/20"
-        >
-          <animate
-            attributeName="r" values="10;16;10" dur="2s" repeatCount="indefinite"
-          />
-          <animate
-            attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"
-          />
-        </circle>
-
-        {/* YOU 标签气泡 */}
         <rect
-          x={userX - 18} y={userY - 32}
-          width="36" height="16" rx="8"
+          x={bubbleX - 27} y={Math.max(2, userY - 34)}
+          width="54" height="20" rx="10"
           className="fill-primary"
         />
         <text
-          x={userX} y={userY - 20}
+          x={bubbleX} y={Math.max(16, userY - 20)}
           textAnchor="middle"
-          className="text-[9px] font-bold fill-white"
+          className="text-[10px] font-bold fill-white"
         >
-          YOU
+          你们 {score}%
         </text>
 
-        {/* x 轴标签 */}
-        <text x={padLeft} y={viewH - 2} textAnchor="middle" className="text-[7px] fill-on-surface-variant/40">
-          {Math.round(minScore)}
-        </text>
-        <text x={padLeft + plotW / 2} y={viewH - 2} textAnchor="middle" className="text-[7px] fill-on-surface-variant/40">
-          契合度
-        </text>
-        <text x={padLeft + plotW} y={viewH - 2} textAnchor="middle" className="text-[7px] fill-on-surface-variant/40">
-          {Math.round(maxScore)}
+        {[0, 25, 50, 75, 100].map((tick) => {
+          const x = padLeft + (tick / 100) * plotW;
+          return (
+            <g key={tick}>
+              <line x1={x} y1={plotBottom} x2={x} y2={plotBottom + 5} className="stroke-outline-variant/60" />
+              <text x={x} y={plotBottom + 18} textAnchor="middle" className="text-[9px] fill-on-surface-variant/60">
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+        <text x={viewW / 2} y={viewH - 5} textAnchor="middle" className="text-[9px] fill-on-surface-variant/50">
+          契合度分数
         </text>
       </svg>
     </div>
@@ -208,6 +205,7 @@ const MatchReportPage: React.FC = () => {
 
   const compatibility = matchReport.compatibilityScore;
   const rankPercent = matchReport.rankPercent;
+  const scoreDistribution = matchReport.scoreDistribution;
   const iceTask = matchReport.iceBreakingTask;
   const timeRemaining = matchReport.timeRemaining;
   const resonances = matchReport.resonancePoints;
@@ -253,21 +251,30 @@ const MatchReportPage: React.FC = () => {
   return (
     <main className="max-w-4xl mx-auto px-6 mt-12 space-y-12 pb-32">
       {/* Hero Section: 契合度 */}
-      <section className="relative text-center py-16 px-8 rounded-[2rem] overflow-hidden bg-surface-container-low">
+      <section className="relative overflow-hidden rounded-[2rem] bg-surface-container-low px-4 py-10 text-center sm:px-8 sm:py-16">
         <div className="absolute inset-0 opacity-10 pointer-events-none" />
         <div className="relative z-10 space-y-4">
           <span className="label-md text-primary font-semibold tracking-widest uppercase">Matching Report</span>
-          <h1 className="text-7xl md:text-8xl font-black tracking-tighter text-on-surface">
+          <h1 className="text-5xl font-black tracking-tighter text-on-surface sm:text-7xl md:text-8xl">
             契合度{' '}
             <span className="bg-gradient-to-tr from-primary to-primary-container bg-clip-text text-transparent">
               {compatibility}%
             </span>
           </h1>
-          {/* Normal Distribution Visualization */}
-          <div className="w-full max-w-md mx-auto pt-8">
-            <DistributionCurve score={compatibility} />
-            <div className="mt-2 text-label-md text-on-surface-variant italic">
-              恭喜！你们的契合度击败了全校 {rankPercent}% 的校友组合
+          {/* 匿名匹配分布与当前组合位置 */}
+          <div className="w-full max-w-xl mx-auto pt-8">
+            <DistributionCurve score={compatibility} distribution={scoreDistribution} />
+            <div className="mt-1 text-label-md text-on-surface-variant">
+              {scoreDistribution.source === 'empirical' ? (
+                <>你们的契合度高于本周 {rankPercent}% 的已匹配组合</>
+              ) : (
+                <>
+                  在算法模拟样本中，你们的契合度高于约 {rankPercent}% 的组合
+                  <span className="mt-1 block text-xs not-italic opacity-70">
+                    本周真实匹配不足 30 对，暂不展示可能失真的真实分布
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -147,10 +147,26 @@ export interface ResonancePoint {
   color: 'primary' | 'secondary' | 'tertiary';
 }
 
+export interface MatchScoreDistributionBin {
+  min: number;
+  max: number;
+  count: number;
+}
+
+export interface MatchScoreDistribution {
+  source: 'empirical' | 'simulated';
+  sampleSize: number;
+  weekTag?: string;
+  mean: number;
+  standardDeviation: number;
+  bins: MatchScoreDistributionBin[];
+}
+
 export interface MatchReportData {
   matchId: string;
   compatibilityScore: number;
   rankPercent: number;
+  scoreDistribution: MatchScoreDistribution;
   dimensions: MatchReportDimension[];
   summary: string;
   highlightTopics: string[];

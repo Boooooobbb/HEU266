@@ -12,9 +12,135 @@
 
 import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/services/authService';
-import type { MatchReportData, ResonancePoint } from '@/types';
+import type {
+  MatchReportData,
+  MatchScoreDistribution,
+  MatchScoreDistributionBin,
+  ResonancePoint,
+} from '@/types';
 
 const MATCHING_STORAGE_KEY = 'stitch_o_match_matching';
+const SIMULATED_DISTRIBUTION_MEAN = 54.4;
+const SIMULATED_DISTRIBUTION_SD = 7.1;
+const DISTRIBUTION_BIN_COUNT = 20;
+const MIN_EMPIRICAL_SAMPLE_SIZE = 30;
+
+interface DistributionRpcResponse {
+  source?: string;
+  sample_size?: number;
+  week_tag?: string;
+  mean?: number;
+  standard_deviation?: number;
+  percentile?: number;
+  bins?: Array<{
+    min?: number;
+    max?: number;
+    count?: number;
+  }>;
+}
+
+function createSimulatedDistribution(score: number): {
+  distribution: MatchScoreDistribution;
+  rankPercent: number;
+} {
+  const binWidth = 100 / DISTRIBUTION_BIN_COUNT;
+  const bins: MatchScoreDistributionBin[] = Array.from(
+    { length: DISTRIBUTION_BIN_COUNT },
+    (_, index) => {
+      const min = index * binWidth;
+      const max = min + binWidth;
+      const probability = normalCDF((max - SIMULATED_DISTRIBUTION_MEAN) / SIMULATED_DISTRIBUTION_SD)
+        - normalCDF((min - SIMULATED_DISTRIBUTION_MEAN) / SIMULATED_DISTRIBUTION_SD);
+
+      return {
+        min,
+        max,
+        count: Math.max(0, probability * 1000),
+      };
+    },
+  );
+
+  const rawPercentile = normalCDF(
+    (score - SIMULATED_DISTRIBUTION_MEAN) / SIMULATED_DISTRIBUTION_SD,
+  ) * 100;
+
+  return {
+    distribution: {
+      source: 'simulated',
+      sampleSize: 1000,
+      mean: SIMULATED_DISTRIBUTION_MEAN,
+      standardDeviation: SIMULATED_DISTRIBUTION_SD,
+      bins,
+    },
+    // 模拟分布不声称绝对的 0% 或 100%，避免把模型估计展示成确定事实。
+    rankPercent: Math.round(Math.min(99.9, Math.max(0.1, rawPercentile)) * 10) / 10,
+  };
+}
+
+async function getScoreDistribution(
+  matchId: string,
+  score: number,
+): Promise<{ distribution: MatchScoreDistribution; rankPercent: number }> {
+  const fallback = createSimulatedDistribution(score);
+  if (!supabase) return fallback;
+
+  const { data, error } = await supabase.rpc('get_match_score_distribution', {
+    p_match_id: matchId,
+  });
+
+  if (error || !data || typeof data !== 'object') return fallback;
+
+  const result = data as DistributionRpcResponse;
+  const sampleSize = Number(result.sample_size);
+  const bins = Array.isArray(result.bins)
+    ? result.bins
+      .map((bin) => ({
+        min: Number(bin.min),
+        max: Number(bin.max),
+        count: Number(bin.count),
+      }))
+      .filter((bin) => (
+        Number.isFinite(bin.min)
+        && Number.isFinite(bin.max)
+        && Number.isFinite(bin.count)
+        && bin.max > bin.min
+        && bin.count >= 0
+      ))
+    : [];
+
+  if (
+    result.source !== 'empirical'
+    || !Number.isFinite(sampleSize)
+    || sampleSize < MIN_EMPIRICAL_SAMPLE_SIZE
+    || bins.length !== DISTRIBUTION_BIN_COUNT
+  ) {
+    return fallback;
+  }
+
+  const percentile = Number(result.percentile);
+  const mean = Number(result.mean);
+  const standardDeviation = Number(result.standard_deviation);
+
+  if (
+    !Number.isFinite(percentile)
+    || !Number.isFinite(mean)
+    || !Number.isFinite(standardDeviation)
+  ) {
+    return fallback;
+  }
+
+  return {
+    distribution: {
+      source: 'empirical',
+      sampleSize,
+      weekTag: result.week_tag,
+      mean,
+      standardDeviation,
+      bins,
+    },
+    rankPercent: Math.round(Math.min(100, Math.max(0, percentile)) * 10) / 10,
+  };
+}
 
 export const hasJoinedMatching = (): boolean => {
   const stored = localStorage.getItem(MATCHING_STORAGE_KEY);
@@ -352,15 +478,15 @@ export const getUserMatchReport = async (): Promise<MatchReportData | null> => {
     location: topics.length > 0 ? topics[0] : '校园',
   };
 
-  // 8. rankPercent 估算（基于1000人测试分布: mean=54.4, SD=7.1）
+  // 8. 优先读取本周匿名聚合分布；样本不足或 RPC 尚未部署时使用模拟分布。
   const score = match.match_rate || (content?.compatibility_score as number) || 50;
-  const zScore = (score - 54.4) / 7.1;
-  const rankPercent = Math.round(normalCDF(zScore) * 1000) / 10;
+  const { distribution: scoreDistribution, rankPercent } = await getScoreDistribution(match.id, score);
 
   return {
     matchId: match.id,
     compatibilityScore: Math.round(score * 10) / 10,
     rankPercent,
+    scoreDistribution,
     dimensions: dimensions.map((d: { name: string; score: number; weight: number }) => ({
       name: d.name,
       score: Math.round(d.score * 10) / 10,
