@@ -16,7 +16,10 @@ import { hasSupabaseConfig, supabase } from '@/lib/supabase';
 import { useQuestionnaireStore } from '@/store/questionnaire';
 import { QUESTIONNAIRE_TOTAL_QUESTIONS } from '@/utils/questionnaireProgress';
 
-const STORAGE_KEY_PREFIX = 'stitch_o_match_questionnaire';
+// v2 intentionally starts with a clean, user-scoped cache. The previous key
+// could be populated by the legacy global cache and then incorrectly assigned
+// to the next account that logged in on the same browser.
+const STORAGE_KEY_PREFIX = 'stitch_o_match_questionnaire_v2';
 const LEGACY_STORAGE_KEY = 'stitch_o_match_questionnaire';
 const USER_STORAGE_KEY = 'stitch_o_match_user';
 let questionnaireCache: QuestionnaireAnswer | null = null;
@@ -84,7 +87,8 @@ const getCurrentStorageKey = (): string => {
 };
 
 const readLocalQuestionnaire = (): QuestionnaireAnswer | null => {
-  const storageKey = getCurrentStorageKey();
+  const currentUserId = resolveCurrentUserIdFromLocalStorage();
+  const storageKey = getStorageKeyByUserId(currentUserId);
 
   if (questionnaireCache && questionnaireCacheKey === storageKey) {
     return questionnaireCache;
@@ -94,7 +98,10 @@ const readLocalQuestionnaire = (): QuestionnaireAnswer | null => {
   questionnaireCacheKey = storageKey;
 
   let stored = localStorage.getItem(storageKey);
-  if (!stored) {
+  // The old key was shared by every account. It can only be migrated into the
+  // anonymous cache; assigning it to a signed-in user leaks another account's
+  // answers and produces a false completion count.
+  if (!stored && !currentUserId) {
     const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacy) {
       stored = legacy;

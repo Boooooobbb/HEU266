@@ -170,9 +170,29 @@ const mapAuthUser = (authUser: {
   };
 };
 
+const readStoredUserId = (): string | null => {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  if (!storedUser) return null;
+
+  try {
+    const parsed = JSON.parse(storedUser) as { id?: unknown };
+    return typeof parsed.id === 'string' && parsed.id.trim() ? parsed.id : null;
+  } catch {
+    return null;
+  }
+};
+
+const setStoredUser = (user: User): void => {
+  if (readStoredUserId() !== user.id) {
+    resetQuestionnaireSessionCache();
+  }
+
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+};
+
 const setClientAuth = (token: string, user: User) => {
   localStorage.setItem(TOKEN_STORAGE_KEY, token);
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  setStoredUser(user);
   currentUserCache = { user, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
   useAuthStore.getState().setAuth(token, user);
 };
@@ -409,7 +429,7 @@ export const register = async (data: RegisterData): Promise<LoginResult> => {
   const user = mapAuthUser(signUpResult.user);
   const token = signUpResult.session?.access_token ?? '';
 
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  setStoredUser(user);
   if (token) {
     setClientAuth(token, user);
   } else {
@@ -552,7 +572,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
       }
 
       const user = mapAuthUser(data.user);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      setStoredUser(user);
       useAuthStore.getState().confirmAuthenticated();
       useAuthStore.getState().setUser(user);
       currentUserCache = { user, expiresAt: Date.now() + CURRENT_USER_CACHE_TTL_MS };
